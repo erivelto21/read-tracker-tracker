@@ -17,6 +17,21 @@ This is a Golang/Gin implementation of an application designed to track your rea
 
 ## Directory Structure
 
+```
+tracker/
+├── cmd/                # Entry points (main.go files)
+│   └── api/            # Gin server entry point
+│       └── main.go     
+├── handler/            # Gin route handlers
+├── service/            # Business logic
+├── repository/         # Data access
+├── domain/             # Structs/Models
+├── config/             # Configuration loading
+├── api/                # API definitions (OpenAPI/Swagger specs)
+├── go.mod              # Module definition
+└── go.sum              # Dependency checksums
+```
+
 ## Development Commands
 
 ```bash
@@ -39,5 +54,5 @@ go fmt ./...
 golangci-lint run
 
 # Start the server
-go run hello.go
+go run cmd/api/main.go
 ```
