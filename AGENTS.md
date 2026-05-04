@@ -45,14 +45,16 @@ go build ./...
 go test ./...
 
 # Run tests with coverage
-go test -coverprofile=coverage.out ./...
 
 # Format code
-go fmt ./...
 
 # Run linter
-golangci-lint run
 
 # Start the server
 go run cmd/api/main.go
 ```
+
+## Code Guidelines
+
+1. **Error Handling**: Always handle errors explicitly. Do not ignore errors with `_`.
+
