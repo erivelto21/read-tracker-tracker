@@ -32,30 +32,28 @@ tracker/
 └── go.sum              # Dependency checksums
 ```
 
-## Development Commands
+## Getting Started
+
+After cloning, run the one-time setup to install all required dev tools:
 
 ```bash
-# Install dependencies
-go mod download
-
-# Build
-go build ./...
-
-# Run tests
-go test ./...
-
-# Run tests with coverage
-go test -cover ./...
-
-# Format code
-go fmt ./...
-
-# Run linter
-golangci-lint run ./...
-
-# Start the server
-go run cmd/api/main.go
+make setup
 ```
+
+## Development Commands
+
+| Command | Description |
+| :--- | :--- |
+| `make setup` | Install dev tools (`goimports`, `golangci-lint`) and download dependencies |
+| `make run` | Start the API server |
+| `make build` | Compile the binary to `bin/tracker` |
+| `make test` | Run all tests |
+| `make test-race` | Run all tests with the race detector |
+| `make test-cover` | Run tests with coverage report |
+| `make fmt` | Format code with `go fmt` and `goimports` |
+| `make lint` | Run `golangci-lint` |
+| `make tidy` | Tidy and verify go modules |
+| `make help` | List all available targets |
 
 ## Code Guidelines
 
@@ -235,9 +233,10 @@ type Config struct {
 
 ### 12. Tools & Linting
 
-| Tool             | Purpose                                 |
-| :--------------- | :-------------------------------------- |
-| `go fmt`         | Code formatting                         |
-| `go test -race`  | Race condition detection                |
-| `go mod tidy`    | Dependency hygiene                      |
+| Make Target      | Tool             | Purpose                                 |
+| :--------------- | :--------------- | :-------------------------------------- |
+| `make fmt`       | `go fmt` + `goimports` | Code formatting and import ordering |
+| `make lint`      | `golangci-lint`  | Static analysis                         |
+| `make test-race` | `go test -race`  | Race condition detection                |
+| `make tidy`      | `go mod tidy`    | Dependency hygiene                      |
 
