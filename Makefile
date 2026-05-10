@@ -3,6 +3,11 @@
 BINARY_NAME=tracker
 CMD_PATH=./cmd/api
 
+ifneq (,$(wildcard ../.env))
+include ../.env
+export
+endif
+
 ## help: show available commands
 help:
 	@echo "Usage: make <target>"
