@@ -51,6 +51,17 @@ func (h *TitleHandler) RegisterRoutes(rg *gin.RouterGroup) {
 }
 
 // CreateTitle handles POST /titles.
+//
+//	@Summary      Create a title
+//	@Tags         titles
+//	@Accept       json
+//	@Produce      json
+//	@Param        title  body      CreateTitleRequest  true  "Title to create"
+//	@Success      201    {object}  domain.Title
+//	@Failure      400    {object}  ErrorEnvelope
+//	@Failure      409    {object}  ErrorEnvelope
+//	@Failure      500    {object}  ErrorEnvelope
+//	@Router       /titles [post]
 func (h *TitleHandler) CreateTitle(c *gin.Context) {
 	var req CreateTitleRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

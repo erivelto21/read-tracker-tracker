@@ -1,0 +1,135 @@
+basePath: /v1
+definitions:
+  domain.Title:
+    properties:
+      chapter:
+        type: integer
+      id:
+        type: string
+      link:
+        type: string
+      name:
+        type: string
+      observation:
+        type: string
+      page:
+        type: integer
+      type:
+        $ref: '#/definitions/domain.TitleType'
+    type: object
+  domain.TitleType:
+    enum:
+    - book
+    - manga
+    - manhua
+    - novel
+    - article
+    type: string
+    x-enum-varnames:
+    - Book
+    - Manga
+    - Manhua
+    - Novel
+    - Article
+  handler.CreateTitleRequest:
+    properties:
+      chapter:
+        description: chapter is required for book, manga, manhua, novel; optional
+          for article
+        maximum: 10000
+        minimum: -100
+        type: integer
+      link:
+        description: link is required for manga, manhua, novel
+        maxLength: 200
+        type: string
+      name:
+        maxLength: 100
+        minLength: 3
+        type: string
+      observation:
+        maxLength: 500
+        type: string
+      page:
+        description: page is required only for book
+        maximum: 10000
+        minimum: 0
+        type: integer
+      type:
+        allOf:
+        - $ref: '#/definitions/domain.TitleType'
+        enum:
+        - book
+        - manga
+        - manhua
+        - novel
+        - article
+    required:
+    - name
+    - type
+    type: object
+  handler.ErrorBody:
+    properties:
+      code:
+        type: string
+      details:
+        items:
+          $ref: '#/definitions/handler.ErrorDetail'
+        type: array
+      message:
+        type: string
+    type: object
+  handler.ErrorDetail:
+    properties:
+      field:
+        type: string
+      message:
+        type: string
+    type: object
+  handler.ErrorEnvelope:
+    properties:
+      error:
+        $ref: '#/definitions/handler.ErrorBody'
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: API for tracking reading progress of books, manga, manhua, novels,
+    and articles.
+  title: Read Tracker API
+  version: "1.0"
+paths:
+  /titles:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Title to create
+        in: body
+        name: title
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CreateTitleRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/domain.Title'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+      summary: Create a title
+      tags:
+      - titles
+swagger: "2.0"

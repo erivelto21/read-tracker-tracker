@@ -1,4 +1,4 @@
-.PHONY: help setup run build test test-race fmt lint tidy
+.PHONY: help setup run build test test-race fmt lint tidy swag
 
 BINARY_NAME=tracker
 CMD_PATH=./cmd/api
@@ -55,3 +55,7 @@ lint:
 tidy:
 	go mod tidy
 	go mod verify
+
+## swag: regenerate Swagger docs from annotations
+swag:
+	swag init -g cmd/api/main.go

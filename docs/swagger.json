@@ -1,0 +1,194 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "API for tracking reading progress of books, manga, manhua, novels, and articles.",
+        "title": "Read Tracker API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/v1",
+    "paths": {
+        "/titles": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "titles"
+                ],
+                "summary": "Create a title",
+                "parameters": [
+                    {
+                        "description": "Title to create",
+                        "name": "title",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.CreateTitleRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/domain.Title"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorEnvelope"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorEnvelope"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorEnvelope"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "domain.Title": {
+            "type": "object",
+            "properties": {
+                "chapter": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "link": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "observation": {
+                    "type": "string"
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "type": {
+                    "$ref": "#/definitions/domain.TitleType"
+                }
+            }
+        },
+        "domain.TitleType": {
+            "type": "string",
+            "enum": [
+                "book",
+                "manga",
+                "manhua",
+                "novel",
+                "article"
+            ],
+            "x-enum-varnames": [
+                "Book",
+                "Manga",
+                "Manhua",
+                "Novel",
+                "Article"
+            ]
+        },
+        "handler.CreateTitleRequest": {
+            "type": "object",
+            "required": [
+                "name",
+                "type"
+            ],
+            "properties": {
+                "chapter": {
+                    "description": "chapter is required for book, manga, manhua, novel; optional for article",
+                    "type": "integer",
+                    "maximum": 10000,
+                    "minimum": -100
+                },
+                "link": {
+                    "description": "link is required for manga, manhua, novel",
+                    "type": "string",
+                    "maxLength": 200
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 3
+                },
+                "observation": {
+                    "type": "string",
+                    "maxLength": 500
+                },
+                "page": {
+                    "description": "page is required only for book",
+                    "type": "integer",
+                    "maximum": 10000,
+                    "minimum": 0
+                },
+                "type": {
+                    "enum": [
+                        "book",
+                        "manga",
+                        "manhua",
+                        "novel",
+                        "article"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/domain.TitleType"
+                        }
+                    ]
+                }
+            }
+        },
+        "handler.ErrorBody": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "details": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.ErrorDetail"
+                    }
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.ErrorDetail": {
+            "type": "object",
+            "properties": {
+                "field": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.ErrorEnvelope": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "$ref": "#/definitions/handler.ErrorBody"
+                }
+            }
+        }
+    }
+}

@@ -1,3 +1,9 @@
+// @title           Read Tracker API
+// @version         1.0
+// @description     API for tracking reading progress of books, manga, manhua, novels, and articles.
+// @host            localhost:8080
+// @BasePath        /v1
+
 package main
 
 import (
@@ -7,11 +13,14 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	ginSwagger "github.com/swaggo/gin-swagger"
+	swaggerFiles "github.com/swaggo/files"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 
 	"github.com/erivelto/read-tracker/tracker/config"
+	_ "github.com/erivelto/read-tracker/tracker/docs"
 	"github.com/erivelto/read-tracker/tracker/handler"
 	"github.com/erivelto/read-tracker/tracker/repository"
 	"github.com/erivelto/read-tracker/tracker/usecase"
@@ -63,6 +72,8 @@ func main() {
 
 	router := gin.New()
 	router.Use(gin.Recovery())
+
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	v1 := router.Group("/v1")
 	titleHandler.RegisterRoutes(v1)
