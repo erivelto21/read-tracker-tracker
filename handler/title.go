@@ -15,6 +15,7 @@ import (
 // TitleUsecase defines the contract the handler uses for title operations.
 type TitleUsecase interface {
 	Create(ctx context.Context, title *domain.Title) (*domain.Title, error)
+	List(ctx context.Context, filter domain.TitleFilter) ([]domain.Title, error)
 }
 
 // CreateTitleRequest is the JSON request body for POST /titles.
@@ -73,6 +74,7 @@ func NewTitleHandler(uc TitleUsecase) *TitleHandler {
 // RegisterRoutes registers the title routes on the given RouterGroup.
 func (h *TitleHandler) RegisterRoutes(rg *gin.RouterGroup) {
 	rg.POST("/titles", h.CreateTitle)
+	rg.GET("/titles", h.ListTitles)
 }
 
 // CreateTitle handles POST /titles.
@@ -131,4 +133,42 @@ func (h *TitleHandler) CreateTitle(c *gin.Context) {
 	}
 
 	RespondData(c, http.StatusCreated, created)
+}
+
+// ListTitles handles GET /titles.
+//
+//	@Summary      List titles
+//	@Tags         titles
+//	@Produce      json
+//	@Param        type  query     string  false  "Filter by type (book, manga, manhua, novel, article)"
+//	@Param        name  query     string  false  "Filter by name (partial, case-insensitive)"
+//	@Success      200   {object}  DataEnvelope
+//	@Failure      400   {object}  ErrorEnvelope
+//	@Failure      500   {object}  ErrorEnvelope
+//	@Router       /titles [get]
+func (h *TitleHandler) ListTitles(c *gin.Context) {
+	var filter domain.TitleFilter
+
+	if rawType := strings.ToLower(c.Query("type")); rawType != "" {
+		t := domain.TitleType(rawType)
+		switch t {
+		case domain.Book, domain.Manga, domain.Manhua, domain.Novel, domain.Article:
+			filter.Type = &t
+		default:
+			RespondError(c, http.StatusBadRequest, "BAD_REQUEST", "invalid type value", nil)
+			return
+		}
+	}
+
+	if rawName := c.Query("name"); rawName != "" {
+		filter.Name = &rawName
+	}
+
+	titles, err := h.usecase.List(c.Request.Context(), filter)
+	if err != nil {
+		RespondInternalError(c)
+		return
+	}
+
+	RespondData(c, http.StatusOK, titles)
 }

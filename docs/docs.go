@@ -16,6 +16,49 @@ const docTemplate = `{
     "basePath": "{{.BasePath}}",
     "paths": {
         "/titles": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "titles"
+                ],
+                "summary": "List titles",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Filter by type (book, manga, manhua, novel, article)",
+                        "name": "type",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by name (partial, case-insensitive)",
+                        "name": "name",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.DataEnvelope"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorEnvelope"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorEnvelope"
+                        }
+                    }
+                }
+            },
             "post": {
                 "consumes": [
                     "application/json"
@@ -158,6 +201,12 @@ const docTemplate = `{
                         }
                     ]
                 }
+            }
+        },
+        "handler.DataEnvelope": {
+            "type": "object",
+            "properties": {
+                "data": {}
             }
         },
         "handler.ErrorBody": {

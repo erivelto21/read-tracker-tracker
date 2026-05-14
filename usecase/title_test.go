@@ -9,17 +9,22 @@ import (
 	"github.com/erivelto/read-tracker/tracker/usecase"
 )
 
-// mockTitleRepo is a test double for usecase.TitleRepository.
-type mockTitleRepo struct {
+// fakeTitleRepo is a test double for usecase.TitleRepository.
+type fakeTitleRepo struct {
 	findByNameFn func(ctx context.Context, name string) (*domain.Title, error)
+	findAllFn    func(ctx context.Context, filter domain.TitleFilter) ([]domain.Title, error)
 	saveFn       func(ctx context.Context, title *domain.Title) (*domain.Title, error)
 }
 
-func (m *mockTitleRepo) FindByName(ctx context.Context, name string) (*domain.Title, error) {
+func (m *fakeTitleRepo) FindByName(ctx context.Context, name string) (*domain.Title, error) {
 	return m.findByNameFn(ctx, name)
 }
 
-func (m *mockTitleRepo) Save(ctx context.Context, title *domain.Title) (*domain.Title, error) {
+func (m *fakeTitleRepo) FindAll(ctx context.Context, filter domain.TitleFilter) ([]domain.Title, error) {
+	return m.findAllFn(ctx, filter)
+}
+
+func (m *fakeTitleRepo) Save(ctx context.Context, title *domain.Title) (*domain.Title, error) {
 	return m.saveFn(ctx, title)
 }
 
@@ -74,7 +79,7 @@ func TestTitleUsecase_Create(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			repo := &mockTitleRepo{
+			repo := &fakeTitleRepo{
 				findByNameFn: tt.findByName,
 				saveFn:       tt.save,
 			}
@@ -102,4 +107,82 @@ func TestTitleUsecase_Create(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestTitleUsecase_List(t *testing.T) {
+t.Parallel()
+
+manga := domain.Manga
+titles := []domain.Title{
+{ExternalID: "abc", Name: "Berserk", Type: domain.Manga},
+}
+repoErr := errors.New("db error")
+
+tests := []struct {
+name        string
+filter      domain.TitleFilter
+findAllFn   func(ctx context.Context, filter domain.TitleFilter) ([]domain.Title, error)
+wantErr     error
+wantDataLen int
+}{
+{
+name:   "delegates filter to repository",
+filter: domain.TitleFilter{Type: &manga},
+findAllFn: func(_ context.Context, f domain.TitleFilter) ([]domain.Title, error) {
+if f.Type == nil || *f.Type != domain.Manga {
+t.Errorf("expected manga filter, got %v", f.Type)
+}
+return titles, nil
+},
+wantDataLen: 1,
+},
+{
+name:   "returns empty slice when no matches",
+filter: domain.TitleFilter{},
+findAllFn: func(_ context.Context, _ domain.TitleFilter) ([]domain.Title, error) {
+return []domain.Title{}, nil
+},
+wantDataLen: 0,
+},
+{
+name:   "propagates repository error",
+filter: domain.TitleFilter{},
+findAllFn: func(_ context.Context, _ domain.TitleFilter) ([]domain.Title, error) {
+return nil, repoErr
+},
+wantErr: repoErr,
+},
+}
+
+for _, tt := range tests {
+t.Run(tt.name, func(t *testing.T) {
+t.Parallel()
+
+repo := &fakeTitleRepo{
+findByNameFn: func(_ context.Context, _ string) (*domain.Title, error) {
+return nil, domain.ErrNotFound
+},
+findAllFn: tt.findAllFn,
+saveFn: func(_ context.Context, t *domain.Title) (*domain.Title, error) {
+return t, nil
+},
+}
+uc := usecase.NewTitleUsecase(repo)
+
+got, err := uc.List(context.Background(), tt.filter)
+
+if tt.wantErr != nil {
+if !errors.Is(err, tt.wantErr) {
+t.Errorf("List() error = %v, wantErr %v", err, tt.wantErr)
+}
+return
+}
+if err != nil {
+t.Errorf("List() unexpected error = %v", err)
+}
+if len(got) != tt.wantDataLen {
+t.Errorf("List() len = %d, want %d", len(got), tt.wantDataLen)
+}
+})
+}
 }

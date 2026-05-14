@@ -31,6 +31,12 @@ type Title struct {
 	Observation *string       `bson:"observation,omitempty" json:"observation,omitempty"`
 }
 
+// TitleFilter holds optional filters for the List operation.
+type TitleFilter struct {
+	Type *TitleType
+	Name *string
+}
+
 var (
 	ErrAlreadyExists = errors.New("title already exists")
 	ErrNotFound      = errors.New("title not found")

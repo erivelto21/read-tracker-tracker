@@ -68,6 +68,10 @@ definitions:
     - name
     - type
     type: object
+  handler.DataEnvelope:
+    properties:
+      data: {}
+    type: object
   handler.ErrorBody:
     properties:
       code:
@@ -100,6 +104,34 @@ info:
   version: "1.0"
 paths:
   /titles:
+    get:
+      parameters:
+      - description: Filter by type (book, manga, manhua, novel, article)
+        in: query
+        name: type
+        type: string
+      - description: Filter by name (partial, case-insensitive)
+        in: query
+        name: name
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.DataEnvelope'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+      summary: List titles
+      tags:
+      - titles
     post:
       consumes:
       - application/json

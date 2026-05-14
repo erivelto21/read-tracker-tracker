@@ -18,13 +18,18 @@ func init() {
 	gin.SetMode(gin.TestMode)
 }
 
-// mockTitleUsecase is a test double for handler.TitleUsecase.
-type mockTitleUsecase struct {
+// fakeTitleUsecase is a test double for handler.TitleUsecase.
+type fakeTitleUsecase struct {
 	createFn func(ctx context.Context, title *domain.Title) (*domain.Title, error)
+	listFn   func(ctx context.Context, filter domain.TitleFilter) ([]domain.Title, error)
 }
 
-func (m *mockTitleUsecase) Create(ctx context.Context, title *domain.Title) (*domain.Title, error) {
+func (m *fakeTitleUsecase) Create(ctx context.Context, title *domain.Title) (*domain.Title, error) {
 	return m.createFn(ctx, title)
+}
+
+func (m *fakeTitleUsecase) List(ctx context.Context, filter domain.TitleFilter) ([]domain.Title, error) {
+	return m.listFn(ctx, filter)
 }
 
 func newTestRouter(uc handler.TitleUsecase) *gin.Engine {
@@ -50,12 +55,12 @@ func TestCreateTitle(t *testing.T) {
 	pageOne := 10
 	linkURL := "https://example.com"
 
-	successUC := &mockTitleUsecase{
+	successUC := &fakeTitleUsecase{
 		createFn: func(_ context.Context, t *domain.Title) (*domain.Title, error) {
 			return t, nil
 		},
 	}
-	conflictUC := &mockTitleUsecase{
+	conflictUC := &fakeTitleUsecase{
 		createFn: func(_ context.Context, _ *domain.Title) (*domain.Title, error) {
 			return nil, domain.ErrAlreadyExists
 		},
@@ -219,4 +224,167 @@ func TestCreateTitle(t *testing.T) {
 			}
 		})
 	}
+}
+
+
+func performGetRequest(router *gin.Engine, url string) *httptest.ResponseRecorder {
+req := httptest.NewRequest(http.MethodGet, url, nil)
+w := httptest.NewRecorder()
+router.ServeHTTP(w, req)
+return w
+}
+
+func TestListTitles(t *testing.T) {
+t.Parallel()
+
+allTitles := []domain.Title{
+{ExternalID: "abc", Name: "Berserk", Type: domain.Manga},
+{ExternalID: "def", Name: "Dune", Type: domain.Book},
+}
+
+tests := []struct {
+name        string
+url         string
+listFn      func(ctx context.Context, filter domain.TitleFilter) ([]domain.Title, error)
+wantStatus  int
+wantCode    string
+wantDataLen int
+}{
+{
+name: "returns all titles when no filters",
+url:  "/v1/titles",
+listFn: func(_ context.Context, f domain.TitleFilter) ([]domain.Title, error) {
+if f.Type != nil || f.Name != nil {
+t.Error("expected no filter, got one")
+}
+return allTitles, nil
+},
+wantStatus:  http.StatusOK,
+wantDataLen: 2,
+},
+{
+name: "filters by type (lowercase)",
+url:  "/v1/titles?type=manga",
+listFn: func(_ context.Context, f domain.TitleFilter) ([]domain.Title, error) {
+if f.Type == nil || *f.Type != domain.Manga {
+t.Errorf("expected type=manga, got %v", f.Type)
+}
+return allTitles[:1], nil
+},
+wantStatus:  http.StatusOK,
+wantDataLen: 1,
+},
+{
+name: "normalizes type to lowercase (MANGA -> manga)",
+url:  "/v1/titles?type=MANGA",
+listFn: func(_ context.Context, f domain.TitleFilter) ([]domain.Title, error) {
+if f.Type == nil || *f.Type != domain.Manga {
+t.Errorf("expected normalized type=manga, got %v", f.Type)
+}
+return allTitles[:1], nil
+},
+wantStatus:  http.StatusOK,
+wantDataLen: 1,
+},
+{
+name: "filters by name",
+url:  "/v1/titles?name=Berserk",
+listFn: func(_ context.Context, f domain.TitleFilter) ([]domain.Title, error) {
+if f.Name == nil || *f.Name != "Berserk" {
+t.Errorf("expected name=Berserk, got %v", f.Name)
+}
+return allTitles[:1], nil
+},
+wantStatus:  http.StatusOK,
+wantDataLen: 1,
+},
+{
+name: "invalid type returns 400",
+url:  "/v1/titles?type=INVALID",
+listFn: func(_ context.Context, _ domain.TitleFilter) ([]domain.Title, error) {
+t.Error("listFn should not be called on bad request")
+return nil, nil
+},
+wantStatus: http.StatusBadRequest,
+wantCode:   "BAD_REQUEST",
+},
+{
+name: "empty type param is ignored",
+url:  "/v1/titles?type=",
+listFn: func(_ context.Context, f domain.TitleFilter) ([]domain.Title, error) {
+if f.Type != nil {
+t.Errorf("expected nil type filter, got %v", f.Type)
+}
+return allTitles, nil
+},
+wantStatus:  http.StatusOK,
+wantDataLen: 2,
+},
+{
+name: "empty name param is ignored",
+url:  "/v1/titles?name=",
+listFn: func(_ context.Context, f domain.TitleFilter) ([]domain.Title, error) {
+if f.Name != nil {
+t.Errorf("expected nil name filter, got %v", f.Name)
+}
+return allTitles, nil
+},
+wantStatus:  http.StatusOK,
+wantDataLen: 2,
+},
+{
+name: "no results returns 200 with empty data array",
+url:  "/v1/titles",
+listFn: func(_ context.Context, _ domain.TitleFilter) ([]domain.Title, error) {
+return []domain.Title{}, nil
+},
+wantStatus:  http.StatusOK,
+wantDataLen: 0,
+},
+}
+
+for _, tt := range tests {
+t.Run(tt.name, func(t *testing.T) {
+t.Parallel()
+
+uc := &fakeTitleUsecase{
+createFn: func(_ context.Context, t *domain.Title) (*domain.Title, error) {
+return t, nil
+},
+listFn: tt.listFn,
+}
+router := newTestRouter(uc)
+w := performGetRequest(router, tt.url)
+
+if w.Code != tt.wantStatus {
+t.Errorf("status = %d, want %d; body: %s", w.Code, tt.wantStatus, w.Body.String())
+}
+
+if tt.wantCode != "" {
+var errResp struct {
+Error struct {
+Code string `json:"code"`
+} `json:"error"`
+}
+if err := json.Unmarshal(w.Body.Bytes(), &errResp); err != nil {
+t.Fatalf("failed to parse error response: %v", err)
+}
+if errResp.Error.Code != tt.wantCode {
+t.Errorf("error.code = %q, want %q", errResp.Error.Code, tt.wantCode)
+}
+}
+
+if tt.wantStatus == http.StatusOK {
+var resp struct {
+Data []domain.Title `json:"data"`
+}
+if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+t.Fatalf("failed to parse response: %v", err)
+}
+if len(resp.Data) != tt.wantDataLen {
+t.Errorf("data length = %d, want %d", len(resp.Data), tt.wantDataLen)
+}
+}
+})
+}
 }

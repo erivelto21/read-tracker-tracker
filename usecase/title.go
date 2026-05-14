@@ -13,6 +13,7 @@ import (
 // TitleRepository defines the persistence contract required by the title usecase.
 type TitleRepository interface {
 	FindByName(ctx context.Context, name string) (*domain.Title, error)
+	FindAll(ctx context.Context, filter domain.TitleFilter) ([]domain.Title, error)
 	Save(ctx context.Context, title *domain.Title) (*domain.Title, error)
 }
 
@@ -43,4 +44,9 @@ func (u *TitleUsecase) Create(ctx context.Context, title *domain.Title) (*domain
 		return nil, fmt.Errorf("usecase.Create: %w", err)
 	}
 	return saved, nil
+}
+
+// List returns all titles matching the given filter.
+func (u *TitleUsecase) List(ctx context.Context, filter domain.TitleFilter) ([]domain.Title, error) {
+	return u.repo.FindAll(ctx, filter)
 }
