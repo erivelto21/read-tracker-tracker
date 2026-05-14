@@ -3,8 +3,8 @@ package handler
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -27,8 +27,33 @@ type CreateTitleRequest struct {
 	// page is required only for book
 	Page *int `json:"page" validate:"required_if=Type book,omitempty,min=0,max=10000"`
 	// link is required for manga, manhua, novel
-	Link        *string `json:"link"        validate:"required_if=Type manga,required_if=Type manhua,required_if=Type novel,omitempty,max=200"`
+	Link        *string `json:"link"        validate:"required_if=Type manga,required_if=Type manhua,required_if=Type novel,omitempty,http_url,max=200"`
 	Observation *string `json:"observation" validate:"omitempty,max=500"`
+}
+
+// validationMessage translates a validator.FieldError tag into a human-readable message.
+func validationMessage(fe validator.FieldError) string {
+	switch fe.Tag() {
+	case "required", "required_if":
+		return "This field is required"
+	case "oneof":
+		values := strings.Fields(fe.Param())
+		if len(values) == 0 {
+			return "Invalid value"
+		}
+		if len(values) == 1 {
+			return "Valid values are: " + values[0]
+		}
+		return "Valid values are: " + strings.Join(values[:len(values)-1], ", ") + " and " + values[len(values)-1]
+	case "min":
+		return "Minimum value is " + fe.Param()
+	case "max":
+		return "Maximum value is " + fe.Param()
+	case "http_url":
+		return "Must be a valid URL"
+	default:
+		return "Invalid value"
+	}
 }
 
 // TitleHandler handles HTTP requests for title operations.
@@ -65,7 +90,7 @@ func (h *TitleHandler) RegisterRoutes(rg *gin.RouterGroup) {
 func (h *TitleHandler) CreateTitle(c *gin.Context) {
 	var req CreateTitleRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		RespondError(c, http.StatusBadRequest, "VALIDATION_ERROR", "request validation failed", nil)
+		RespondError(c, http.StatusBadRequest, "BAD_REQUEST", "Bad Request", nil)
 		return
 	}
 
@@ -76,10 +101,10 @@ func (h *TitleHandler) CreateTitle(c *gin.Context) {
 			for _, fe := range ve {
 				details = append(details, ErrorDetail{
 					Field:   fe.Field(),
-					Message: fmt.Sprintf("failed on '%s' validation", fe.Tag()),
+					Message: validationMessage(fe),
 				})
 			}
-			RespondError(c, http.StatusBadRequest, "VALIDATION_ERROR", "request validation failed", details)
+			RespondError(c, http.StatusBadRequest, "BAD_REQUEST", "Bad Request", details)
 			return
 		}
 		RespondInternalError(c)

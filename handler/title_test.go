@@ -62,11 +62,12 @@ func TestCreateTitle(t *testing.T) {
 	}
 
 	tests := []struct {
-		name       string
-		uc         handler.TitleUsecase
-		body       interface{}
-		wantStatus int
-		wantCode   string
+		name          string
+		uc            handler.TitleUsecase
+		body          interface{}
+		wantStatus    int
+		wantCode      string
+		wantDetailMsg string
 	}{
 		{
 			name: "valid manga request",
@@ -113,35 +114,35 @@ func TestCreateTitle(t *testing.T) {
 			uc:         successUC,
 			body:       map[string]interface{}{"type": "manga", "chapter": chapterOne, "link": linkURL},
 			wantStatus: http.StatusBadRequest,
-			wantCode:   "VALIDATION_ERROR",
+			wantCode:   "BAD_REQUEST",
 		},
 		{
 			name:       "chapter missing for manga",
 			uc:         successUC,
 			body:       map[string]interface{}{"name": "Berserk", "type": "manga", "link": linkURL},
 			wantStatus: http.StatusBadRequest,
-			wantCode:   "VALIDATION_ERROR",
+			wantCode:   "BAD_REQUEST",
 		},
 		{
 			name:       "page missing for book",
 			uc:         successUC,
 			body:       map[string]interface{}{"name": "Dune", "type": "book", "chapter": chapterOne},
 			wantStatus: http.StatusBadRequest,
-			wantCode:   "VALIDATION_ERROR",
+			wantCode:   "BAD_REQUEST",
 		},
 		{
 			name:       "link missing for novel",
 			uc:         successUC,
 			body:       map[string]interface{}{"name": "Overlord", "type": "novel", "chapter": chapterOne},
 			wantStatus: http.StatusBadRequest,
-			wantCode:   "VALIDATION_ERROR",
+			wantCode:   "BAD_REQUEST",
 		},
 		{
 			name:       "invalid type enum",
 			uc:         successUC,
 			body:       map[string]interface{}{"name": "Something", "type": "comic"},
 			wantStatus: http.StatusBadRequest,
-			wantCode:   "VALIDATION_ERROR",
+			wantCode:   "BAD_REQUEST",
 		},
 		{
 			name: "duplicate name returns 409",
@@ -151,6 +152,29 @@ func TestCreateTitle(t *testing.T) {
 			},
 			wantStatus: http.StatusConflict,
 			wantCode:   "CONFLICT",
+		},
+		{
+			name:       "invalid link URL",
+			uc:         successUC,
+			body:       map[string]interface{}{"name": "Berserk", "type": "manga", "chapter": chapterOne, "link": "not-a-url"},
+			wantStatus: http.StatusBadRequest,
+			wantCode:   "BAD_REQUEST",
+		},
+		{
+			name:          "required field message is human-readable",
+			uc:            successUC,
+			body:          map[string]interface{}{"type": "manga", "chapter": chapterOne, "link": linkURL},
+			wantStatus:    http.StatusBadRequest,
+			wantCode:      "BAD_REQUEST",
+			wantDetailMsg: "This field is required",
+		},
+		{
+			name:          "oneof field message is human-readable",
+			uc:            successUC,
+			body:          map[string]interface{}{"name": "Something", "type": "comic"},
+			wantStatus:    http.StatusBadRequest,
+			wantCode:      "BAD_REQUEST",
+			wantDetailMsg: "Valid values are: book, manga, manhua, novel and article",
 		},
 	}
 
@@ -168,7 +192,10 @@ func TestCreateTitle(t *testing.T) {
 			if tt.wantCode != "" {
 				var errResp struct {
 					Error struct {
-						Code string `json:"code"`
+						Code    string `json:"code"`
+						Details []struct {
+							Message string `json:"message"`
+						} `json:"details"`
 					} `json:"error"`
 				}
 				if err := json.Unmarshal(w.Body.Bytes(), &errResp); err != nil {
@@ -176,6 +203,18 @@ func TestCreateTitle(t *testing.T) {
 				}
 				if errResp.Error.Code != tt.wantCode {
 					t.Errorf("error.code = %q, want %q", errResp.Error.Code, tt.wantCode)
+				}
+				if tt.wantDetailMsg != "" {
+					found := false
+					for _, d := range errResp.Error.Details {
+						if d.Message == tt.wantDetailMsg {
+							found = true
+							break
+						}
+					}
+					if !found {
+						t.Errorf("no detail with message %q; got details: %+v", tt.wantDetailMsg, errResp.Error.Details)
+					}
 				}
 			}
 		})

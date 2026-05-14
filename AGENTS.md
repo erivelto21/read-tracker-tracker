@@ -229,6 +229,37 @@ type Config struct {
 - Use appropriate HTTP status codes (`400` for bad input, `404` for not found, `409` for conflicts, `500` for internal errors).
 - Document all endpoints with OpenAPI/Swagger specs in the `api/` directory.
 
+#### Validation Error Messages
+
+All validation error messages **must be human-friendly**. Never expose raw validator tag names (e.g., `"failed on 'required' validation"`) to API clients.
+
+Use a translation function in the handler that maps `validator.FieldError` tags to readable messages:
+
+| Tag | Human message |
+| :--- | :--- |
+| `required`, `required_if` | `"This field is required"` |
+| `oneof` | `"Valid values are: <list from fe.Param()>"` |
+| `min` | `"Minimum value is <fe.Param()>"` |
+| `max` | `"Maximum value is <fe.Param()>"` |
+| `http_url` | `"Must be a valid URL"` |
+
+Error responses must use code `BAD_REQUEST` and message `"Bad Request"` for all validation failures:
+
+```json
+{
+  "error": {
+    "code": "BAD_REQUEST",
+    "message": "Bad Request",
+    "details": [
+      { "field": "Name", "message": "This field is required" },
+      { "field": "Type", "message": "Valid values are: book, manga, manhua, novel and article" }
+    ]
+  }
+}
+```
+
+Use `http_url` (not `url`) for any link/URL fields to restrict to HTTP/HTTPS schemes only.
+
 ---
 
 ### 12. Tools & Linting
