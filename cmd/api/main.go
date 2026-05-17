@@ -73,6 +73,11 @@ func main() {
 	router := gin.New()
 	router.Use(gin.Recovery())
 
+	// Health endpoint for container healthchecks
+	router.GET("/healthz", func(c *gin.Context) {
+		c.JSON(200, gin.H{"status": "ok"})
+	})
+
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	v1 := router.Group("/v1")
