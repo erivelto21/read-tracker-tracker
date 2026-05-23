@@ -1,7 +1,6 @@
 // @title           Read Tracker API
 // @version         1.0
 // @description     API for tracking reading progress of books, manga, manhua, novels, and articles.
-// @host            localhost:8080
 // @BasePath        /v1
 
 package main

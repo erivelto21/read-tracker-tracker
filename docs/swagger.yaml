@@ -95,7 +95,6 @@ definitions:
       error:
         $ref: '#/definitions/handler.ErrorBody'
     type: object
-host: localhost:8080
 info:
   contact: {}
   description: API for tracking reading progress of books, manga, manhua, novels,
