@@ -153,7 +153,7 @@ func (h *TitleHandler) CreateTitle(c *gin.Context) {
 //	@Produce      json
 //	@Param        type  query     string  false  "Filter by type (book, manga, manhua, novel, article)"
 //	@Param        name  query     string  false  "Filter by name (partial, case-insensitive)"
-//	@Success      200   {object}  DataEnvelope
+//	@Success      200   {object}  TitlesEnvelope
 //	@Failure      400   {object}  ErrorEnvelope
 //	@Failure      500   {object}  ErrorEnvelope
 //	@Router       /titles [get]
@@ -181,7 +181,7 @@ func (h *TitleHandler) ListTitles(c *gin.Context) {
 		return
 	}
 
-	RespondData(c, http.StatusOK, titles)
+	RespondTitles(c, http.StatusOK, titles)
 }
 
 // UpdateTitle handles PATCH /titles/:id.

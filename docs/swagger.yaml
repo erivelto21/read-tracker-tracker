@@ -68,10 +68,6 @@ definitions:
     - name
     - type
     type: object
-  handler.DataEnvelope:
-    properties:
-      data: {}
-    type: object
   handler.ErrorBody:
     properties:
       code:
@@ -94,6 +90,13 @@ definitions:
     properties:
       error:
         $ref: '#/definitions/handler.ErrorBody'
+    type: object
+  handler.TitlesEnvelope:
+    properties:
+      titles:
+        items:
+          $ref: '#/definitions/domain.Title'
+        type: array
     type: object
   handler.UpdateTitleRequest:
     properties:
@@ -136,7 +139,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/handler.DataEnvelope'
+            $ref: '#/definitions/handler.TitlesEnvelope'
         "400":
           description: Bad Request
           schema:

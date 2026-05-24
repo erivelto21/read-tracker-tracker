@@ -4,11 +4,17 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/erivelto/read-tracker/tracker/domain"
 )
 
 // DataEnvelope wraps a successful response payload.
 type DataEnvelope struct {
 	Data interface{} `json:"data"`
+}
+
+// TitlesEnvelope wraps the titles list response.
+type TitlesEnvelope struct {
+	Titles []domain.Title `json:"titles"`
 }
 
 // ErrorEnvelope wraps an error response.
@@ -32,6 +38,11 @@ type ErrorDetail struct {
 // RespondData writes a JSON success response with the given status code.
 func RespondData(c *gin.Context, status int, data interface{}) {
 	c.JSON(status, DataEnvelope{Data: data})
+}
+
+// RespondTitles writes a JSON success response containing titles.
+func RespondTitles(c *gin.Context, status int, titles []domain.Title) {
+	c.JSON(status, TitlesEnvelope{Titles: titles})
 }
 
 // RespondError writes a JSON error response with the given status code and error details.

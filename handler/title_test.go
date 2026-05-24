@@ -385,13 +385,13 @@ t.Errorf("error.code = %q, want %q", errResp.Error.Code, tt.wantCode)
 
 if tt.wantStatus == http.StatusOK {
 var resp struct {
-Data []domain.Title `json:"data"`
+Titles []domain.Title `json:"titles"`
 }
 if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
 t.Fatalf("failed to parse response: %v", err)
 }
-if len(resp.Data) != tt.wantDataLen {
-t.Errorf("data length = %d, want %d", len(resp.Data), tt.wantDataLen)
+if len(resp.Titles) != tt.wantDataLen {
+t.Errorf("titles length = %d, want %d", len(resp.Titles), tt.wantDataLen)
 }
 }
 })

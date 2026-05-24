@@ -42,7 +42,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handler.DataEnvelope"
+                            "$ref": "#/definitions/handler.TitlesEnvelope"
                         }
                     },
                     "400": {
@@ -261,12 +261,6 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.DataEnvelope": {
-            "type": "object",
-            "properties": {
-                "data": {}
-            }
-        },
         "handler.ErrorBody": {
             "type": "object",
             "properties": {
@@ -300,6 +294,17 @@ const docTemplate = `{
             "properties": {
                 "error": {
                     "$ref": "#/definitions/handler.ErrorBody"
+                }
+            }
+        },
+        "handler.TitlesEnvelope": {
+            "type": "object",
+            "properties": {
+                "titles": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.Title"
+                    }
                 }
             }
         },
