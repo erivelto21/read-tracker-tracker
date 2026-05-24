@@ -37,6 +37,15 @@ type TitleFilter struct {
 	Name *string
 }
 
+// TitleUpdate holds the fields that may be changed via a partial update.
+// A nil field means "not provided" and will not be written.
+type TitleUpdate struct {
+	Chapter     *int
+	Page        *int
+	Link        *string
+	Observation *string
+}
+
 var (
 	ErrAlreadyExists = errors.New("title already exists")
 	ErrNotFound      = errors.New("title not found")

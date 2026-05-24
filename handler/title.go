@@ -16,6 +16,7 @@ import (
 type TitleUsecase interface {
 	Create(ctx context.Context, title *domain.Title) (*domain.Title, error)
 	List(ctx context.Context, filter domain.TitleFilter) ([]domain.Title, error)
+	Update(ctx context.Context, externalID string, fields domain.TitleUpdate) (*domain.Title, error)
 }
 
 // CreateTitleRequest is the JSON request body for POST /titles.
@@ -75,6 +76,16 @@ func NewTitleHandler(uc TitleUsecase) *TitleHandler {
 func (h *TitleHandler) RegisterRoutes(rg *gin.RouterGroup) {
 	rg.POST("/titles", h.CreateTitle)
 	rg.GET("/titles", h.ListTitles)
+	rg.PATCH("/titles/:id", h.UpdateTitle)
+}
+
+// UpdateTitleRequest is the JSON request body for PATCH /titles/:id.
+// All fields are optional; at least one must be provided.
+type UpdateTitleRequest struct {
+	Chapter     *int    `json:"chapter"     validate:"omitempty,min=-100,max=10000"`
+	Page        *int    `json:"page"        validate:"omitempty,min=0,max=10000"`
+	Link        *string `json:"link"        validate:"omitempty,http_url,max=200"`
+	Observation *string `json:"observation" validate:"omitempty,max=500"`
 }
 
 // CreateTitle handles POST /titles.
@@ -171,4 +182,68 @@ func (h *TitleHandler) ListTitles(c *gin.Context) {
 	}
 
 	RespondData(c, http.StatusOK, titles)
+}
+
+// UpdateTitle handles PATCH /titles/:id.
+//
+//	@Summary      Update a title
+//	@Tags         titles
+//	@Accept       json
+//	@Produce      json
+//	@Param        id     path      string             true  "Title ID"
+//	@Param        title  body      UpdateTitleRequest true  "Fields to update"
+//	@Success      200    {object}  domain.Title
+//	@Failure      400    {object}  ErrorEnvelope
+//	@Failure      404    {object}  ErrorEnvelope
+//	@Failure      500    {object}  ErrorEnvelope
+//	@Router       /titles/{id} [patch]
+func (h *TitleHandler) UpdateTitle(c *gin.Context) {
+	id := c.Param("id")
+
+	var req UpdateTitleRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		RespondError(c, http.StatusBadRequest, "BAD_REQUEST", "Bad Request", nil)
+		return
+	}
+
+	if req.Chapter == nil && req.Page == nil && req.Link == nil && req.Observation == nil {
+		RespondError(c, http.StatusBadRequest, "BAD_REQUEST", "at least one field must be provided", nil)
+		return
+	}
+
+	if err := h.validate.Struct(req); err != nil {
+		var ve validator.ValidationErrors
+		if errors.As(err, &ve) {
+			details := make([]ErrorDetail, 0, len(ve))
+			for _, fe := range ve {
+				details = append(details, ErrorDetail{
+					Field:   fe.Field(),
+					Message: validationMessage(fe),
+				})
+			}
+			RespondError(c, http.StatusBadRequest, "BAD_REQUEST", "Bad Request", details)
+			return
+		}
+		RespondInternalError(c)
+		return
+	}
+
+	fields := domain.TitleUpdate{
+		Chapter:     req.Chapter,
+		Page:        req.Page,
+		Link:        req.Link,
+		Observation: req.Observation,
+	}
+
+	updated, err := h.usecase.Update(c.Request.Context(), id, fields)
+	if err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
+			RespondError(c, http.StatusNotFound, "NOT_FOUND", "title not found", nil)
+			return
+		}
+		RespondInternalError(c)
+		return
+	}
+
+	RespondData(c, http.StatusOK, updated)
 }

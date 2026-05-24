@@ -13,8 +13,10 @@ import (
 // TitleRepository defines the persistence contract required by the title usecase.
 type TitleRepository interface {
 	FindByName(ctx context.Context, name string) (*domain.Title, error)
+	FindByExternalID(ctx context.Context, externalID string) (*domain.Title, error)
 	FindAll(ctx context.Context, filter domain.TitleFilter) ([]domain.Title, error)
 	Save(ctx context.Context, title *domain.Title) (*domain.Title, error)
+	Update(ctx context.Context, externalID string, fields domain.TitleUpdate) (*domain.Title, error)
 }
 
 // TitleUsecase encapsulates business logic for title operations.
@@ -49,4 +51,18 @@ func (u *TitleUsecase) Create(ctx context.Context, title *domain.Title) (*domain
 // List returns all titles matching the given filter.
 func (u *TitleUsecase) List(ctx context.Context, filter domain.TitleFilter) ([]domain.Title, error) {
 	return u.repo.FindAll(ctx, filter)
+}
+
+// Update partially updates the mutable fields of the title identified by externalID.
+func (u *TitleUsecase) Update(ctx context.Context, externalID string, fields domain.TitleUpdate) (*domain.Title, error) {
+	_, err := u.repo.FindByExternalID(ctx, externalID)
+	if err != nil {
+		return nil, fmt.Errorf("usecase.Update: %w", err)
+	}
+
+	updated, err := u.repo.Update(ctx, externalID, fields)
+	if err != nil {
+		return nil, fmt.Errorf("usecase.Update: %w", err)
+	}
+	return updated, nil
 }

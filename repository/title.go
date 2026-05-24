@@ -7,6 +7,7 @@ import (
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 
 	"github.com/erivelto/read-tracker/tracker/domain"
 )
@@ -67,4 +68,51 @@ func (r *MongoTitleRepository) Save(ctx context.Context, title *domain.Title) (*
 		return nil, fmt.Errorf("repository.Save: %w", err)
 	}
 	return title, nil
+}
+
+// FindByExternalID retrieves a title by its public UUID. Returns domain.ErrNotFound if it does not exist.
+func (r *MongoTitleRepository) FindByExternalID(ctx context.Context, externalID string) (*domain.Title, error) {
+	var title domain.Title
+	err := r.collection.FindOne(ctx, bson.M{"external_id": externalID}).Decode(&title)
+	if errors.Is(err, mongo.ErrNoDocuments) {
+		return nil, domain.ErrNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("repository.FindByExternalID: %w", err)
+	}
+	return &title, nil
+}
+
+// Update applies a partial update to the title identified by externalID.
+// Only non-nil fields in fields are written. Returns domain.ErrNotFound if no document matches.
+func (r *MongoTitleRepository) Update(ctx context.Context, externalID string, fields domain.TitleUpdate) (*domain.Title, error) {
+	set := bson.M{}
+	if fields.Chapter != nil {
+		set["chapter"] = *fields.Chapter
+	}
+	if fields.Page != nil {
+		set["page"] = *fields.Page
+	}
+	if fields.Link != nil {
+		set["link"] = *fields.Link
+	}
+	if fields.Observation != nil {
+		set["observation"] = *fields.Observation
+	}
+
+	after := options.After
+	var updated domain.Title
+	err := r.collection.FindOneAndUpdate(
+		ctx,
+		bson.M{"external_id": externalID},
+		bson.M{"$set": set},
+		options.FindOneAndUpdate().SetReturnDocument(after),
+	).Decode(&updated)
+	if errors.Is(err, mongo.ErrNoDocuments) {
+		return nil, domain.ErrNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("repository.Update: %w", err)
+	}
+	return &updated, nil
 }

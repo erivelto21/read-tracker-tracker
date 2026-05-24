@@ -95,6 +95,23 @@ definitions:
       error:
         $ref: '#/definitions/handler.ErrorBody'
     type: object
+  handler.UpdateTitleRequest:
+    properties:
+      chapter:
+        maximum: 10000
+        minimum: -100
+        type: integer
+      link:
+        maxLength: 200
+        type: string
+      observation:
+        maxLength: 500
+        type: string
+      page:
+        maximum: 10000
+        minimum: 0
+        type: integer
+    type: object
 info:
   contact: {}
   description: API for tracking reading progress of books, manga, manhua, novels,
@@ -161,6 +178,44 @@ paths:
           schema:
             $ref: '#/definitions/handler.ErrorEnvelope'
       summary: Create a title
+      tags:
+      - titles
+  /titles/{id}:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Title ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Fields to update
+        in: body
+        name: title
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UpdateTitleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Title'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+      summary: Update a title
       tags:
       - titles
 swagger: "2.0"

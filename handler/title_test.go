@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -22,6 +23,7 @@ func init() {
 type fakeTitleUsecase struct {
 	createFn func(ctx context.Context, title *domain.Title) (*domain.Title, error)
 	listFn   func(ctx context.Context, filter domain.TitleFilter) ([]domain.Title, error)
+	updateFn func(ctx context.Context, externalID string, fields domain.TitleUpdate) (*domain.Title, error)
 }
 
 func (m *fakeTitleUsecase) Create(ctx context.Context, title *domain.Title) (*domain.Title, error) {
@@ -30,6 +32,13 @@ func (m *fakeTitleUsecase) Create(ctx context.Context, title *domain.Title) (*do
 
 func (m *fakeTitleUsecase) List(ctx context.Context, filter domain.TitleFilter) ([]domain.Title, error) {
 	return m.listFn(ctx, filter)
+}
+
+func (m *fakeTitleUsecase) Update(ctx context.Context, externalID string, fields domain.TitleUpdate) (*domain.Title, error) {
+	if m.updateFn != nil {
+		return m.updateFn(ctx, externalID, fields)
+	}
+	return nil, nil
 }
 
 func newTestRouter(uc handler.TitleUsecase) *gin.Engine {
@@ -384,6 +393,120 @@ t.Fatalf("failed to parse response: %v", err)
 if len(resp.Data) != tt.wantDataLen {
 t.Errorf("data length = %d, want %d", len(resp.Data), tt.wantDataLen)
 }
+}
+})
+}
+}
+
+func performPatchRequest(router *gin.Engine, id string, body interface{}) *httptest.ResponseRecorder {
+b, _ := json.Marshal(body)
+req := httptest.NewRequest(http.MethodPatch, "/v1/titles/"+id, bytes.NewReader(b))
+req.Header.Set("Content-Type", "application/json")
+w := httptest.NewRecorder()
+router.ServeHTTP(w, req)
+return w
+}
+
+func TestUpdateTitle(t *testing.T) {
+t.Parallel()
+
+chapter := 5
+existing := &domain.Title{ExternalID: "uuid-1", Name: "Berserk", Type: domain.Manga, Chapter: &chapter}
+
+tests := []struct {
+name       string
+id         string
+body       interface{}
+updateFn   func(ctx context.Context, id string, fields domain.TitleUpdate) (*domain.Title, error)
+wantStatus int
+wantCode   string
+}{
+{
+name: "success - update chapter",
+id:   "uuid-1",
+body: map[string]interface{}{"chapter": 10},
+updateFn: func(_ context.Context, _ string, _ domain.TitleUpdate) (*domain.Title, error) {
+	return existing, nil
+},
+wantStatus: http.StatusOK,
+},
+{
+name:       "empty body returns 400",
+id:         "uuid-1",
+body:       map[string]interface{}{},
+wantStatus: http.StatusBadRequest,
+wantCode:   "BAD_REQUEST",
+},
+{
+name:       "chapter below minimum returns 400",
+id:         "uuid-1",
+body:       map[string]interface{}{"chapter": -200},
+wantStatus: http.StatusBadRequest,
+wantCode:   "BAD_REQUEST",
+},
+{
+name:       "page above maximum returns 400",
+id:         "uuid-1",
+body:       map[string]interface{}{"page": 99999},
+wantStatus: http.StatusBadRequest,
+wantCode:   "BAD_REQUEST",
+},
+{
+name:       "invalid link URL returns 400",
+id:         "uuid-1",
+body:       map[string]interface{}{"link": "not-a-url"},
+wantStatus: http.StatusBadRequest,
+wantCode:   "BAD_REQUEST",
+},
+{
+name: "title not found returns 404",
+id:   "missing-id",
+body: map[string]interface{}{"chapter": 1},
+updateFn: func(_ context.Context, _ string, _ domain.TitleUpdate) (*domain.Title, error) {
+	return nil, domain.ErrNotFound
+},
+wantStatus: http.StatusNotFound,
+wantCode:   "NOT_FOUND",
+},
+{
+name: "internal error returns 500",
+id:   "uuid-1",
+body: map[string]interface{}{"chapter": 1},
+updateFn: func(_ context.Context, _ string, _ domain.TitleUpdate) (*domain.Title, error) {
+	return nil, errors.New("unexpected db failure")
+},
+wantStatus: http.StatusInternalServerError,
+},
+}
+
+for _, tt := range tests {
+t.Run(tt.name, func(t *testing.T) {
+t.Parallel()
+
+uc := &fakeTitleUsecase{
+	createFn: func(_ context.Context, t *domain.Title) (*domain.Title, error) { return t, nil },
+	listFn:   func(_ context.Context, _ domain.TitleFilter) ([]domain.Title, error) { return nil, nil },
+	updateFn: tt.updateFn,
+}
+router := newTestRouter(uc)
+w := performPatchRequest(router, tt.id, tt.body)
+
+if w.Code != tt.wantStatus {
+	t.Errorf("status = %d, want %d; body: %s", w.Code, tt.wantStatus, w.Body.String())
+}
+
+if tt.wantCode != "" {
+	var errResp struct {
+		Error struct {
+			Code string `json:"code"`
+		} `json:"error"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &errResp); err != nil {
+		t.Fatalf("failed to parse error response: %v", err)
+	}
+	if errResp.Error.Code != tt.wantCode {
+		t.Errorf("error.code = %q, want %q", errResp.Error.Code, tt.wantCode)
+	}
 }
 })
 }

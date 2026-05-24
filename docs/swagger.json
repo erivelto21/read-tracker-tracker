@@ -101,6 +101,64 @@
                     }
                 }
             }
+        },
+        "/titles/{id}": {
+            "patch": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "titles"
+                ],
+                "summary": "Update a title",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Title ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Fields to update",
+                        "name": "title",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.UpdateTitleRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/domain.Title"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorEnvelope"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorEnvelope"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorEnvelope"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -235,6 +293,29 @@
             "properties": {
                 "error": {
                     "$ref": "#/definitions/handler.ErrorBody"
+                }
+            }
+        },
+        "handler.UpdateTitleRequest": {
+            "type": "object",
+            "properties": {
+                "chapter": {
+                    "type": "integer",
+                    "maximum": 10000,
+                    "minimum": -100
+                },
+                "link": {
+                    "type": "string",
+                    "maxLength": 200
+                },
+                "observation": {
+                    "type": "string",
+                    "maxLength": 500
+                },
+                "page": {
+                    "type": "integer",
+                    "maximum": 10000,
+                    "minimum": 0
                 }
             }
         }
