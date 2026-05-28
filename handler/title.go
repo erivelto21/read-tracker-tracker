@@ -17,6 +17,7 @@ type TitleUsecase interface {
 	Create(ctx context.Context, title *domain.Title) (*domain.Title, error)
 	List(ctx context.Context, filter domain.TitleFilter) ([]domain.Title, error)
 	Update(ctx context.Context, externalID string, fields domain.TitleUpdate) (*domain.Title, error)
+	Delete(ctx context.Context, externalID string) error
 }
 
 // CreateTitleRequest is the JSON request body for POST /titles.
@@ -77,6 +78,7 @@ func (h *TitleHandler) RegisterRoutes(rg *gin.RouterGroup) {
 	rg.POST("/titles", h.CreateTitle)
 	rg.GET("/titles", h.ListTitles)
 	rg.PATCH("/titles/:id", h.UpdateTitle)
+	rg.DELETE("/titles/:id", h.DeleteTitle)
 }
 
 // UpdateTitleRequest is the JSON request body for PATCH /titles/:id.
@@ -246,4 +248,28 @@ func (h *TitleHandler) UpdateTitle(c *gin.Context) {
 	}
 
 	RespondData(c, http.StatusOK, updated)
+}
+
+// DeleteTitle handles DELETE /titles/:id.
+//
+//	@Summary      Delete a title
+//	@Tags         titles
+//	@Param        id   path      string  true  "Title ID"
+//	@Success      204
+//	@Failure      404  {object}  ErrorEnvelope
+//	@Failure      500  {object}  ErrorEnvelope
+//	@Router       /titles/{id} [delete]
+func (h *TitleHandler) DeleteTitle(c *gin.Context) {
+	id := c.Param("id")
+
+	if err := h.usecase.Delete(c.Request.Context(), id); err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
+			RespondError(c, http.StatusNotFound, "NOT_FOUND", "title not found", nil)
+			return
+		}
+		RespondInternalError(c)
+		return
+	}
+
+	c.Status(http.StatusNoContent)
 }

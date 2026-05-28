@@ -17,6 +17,7 @@ type TitleRepository interface {
 	FindAll(ctx context.Context, filter domain.TitleFilter) ([]domain.Title, error)
 	Save(ctx context.Context, title *domain.Title) (*domain.Title, error)
 	Update(ctx context.Context, externalID string, fields domain.TitleUpdate) (*domain.Title, error)
+	DeleteByExternalID(ctx context.Context, externalID string) error
 }
 
 // TitleUsecase encapsulates business logic for title operations.
@@ -51,6 +52,19 @@ func (u *TitleUsecase) Create(ctx context.Context, title *domain.Title) (*domain
 // List returns all titles matching the given filter.
 func (u *TitleUsecase) List(ctx context.Context, filter domain.TitleFilter) ([]domain.Title, error) {
 	return u.repo.FindAll(ctx, filter)
+}
+
+// Delete permanently removes the title identified by externalID.
+func (u *TitleUsecase) Delete(ctx context.Context, externalID string) error {
+	_, err := u.repo.FindByExternalID(ctx, externalID)
+	if err != nil {
+		return fmt.Errorf("usecase.Delete: %w", err)
+	}
+
+	if err := u.repo.DeleteByExternalID(ctx, externalID); err != nil {
+		return fmt.Errorf("usecase.Delete: %w", err)
+	}
+	return nil
 }
 
 // Update partially updates the mutable fields of the title identified by externalID.
