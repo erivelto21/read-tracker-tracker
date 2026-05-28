@@ -24,6 +24,7 @@ type fakeTitleUsecase struct {
 	createFn func(ctx context.Context, title *domain.Title) (*domain.Title, error)
 	listFn   func(ctx context.Context, filter domain.TitleFilter) ([]domain.Title, error)
 	updateFn func(ctx context.Context, externalID string, fields domain.TitleUpdate) (*domain.Title, error)
+	deleteFn func(ctx context.Context, externalID string) error
 }
 
 func (m *fakeTitleUsecase) Create(ctx context.Context, title *domain.Title) (*domain.Title, error) {
@@ -39,6 +40,13 @@ func (m *fakeTitleUsecase) Update(ctx context.Context, externalID string, fields
 		return m.updateFn(ctx, externalID, fields)
 	}
 	return nil, nil
+}
+
+func (m *fakeTitleUsecase) Delete(ctx context.Context, externalID string) error {
+	if m.deleteFn != nil {
+		return m.deleteFn(ctx, externalID)
+	}
+	return nil
 }
 
 func newTestRouter(uc handler.TitleUsecase) *gin.Engine {
@@ -510,4 +518,65 @@ if tt.wantCode != "" {
 }
 })
 }
+}
+
+func performDeleteRequest(router *gin.Engine, id string) *httptest.ResponseRecorder {
+	req := httptest.NewRequest(http.MethodDelete, "/v1/titles/"+id, nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	return w
+}
+
+func TestDeleteTitle(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name       string
+		id         string
+		deleteFn   func(ctx context.Context, externalID string) error
+		wantStatus int
+	}{
+		{
+			name: "success returns 204",
+			id:   "uuid-1",
+			deleteFn: func(_ context.Context, _ string) error {
+				return nil
+			},
+			wantStatus: http.StatusNoContent,
+		},
+		{
+			name: "non-existent title returns 204",
+			id:   "missing-id",
+			deleteFn: func(_ context.Context, _ string) error {
+				return nil
+			},
+			wantStatus: http.StatusNoContent,
+		},
+		{
+			name: "internal error returns 500",
+			id:   "uuid-1",
+			deleteFn: func(_ context.Context, _ string) error {
+				return errors.New("unexpected db failure")
+			},
+			wantStatus: http.StatusInternalServerError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			uc := &fakeTitleUsecase{
+				createFn: func(_ context.Context, t *domain.Title) (*domain.Title, error) { return t, nil },
+				listFn:   func(_ context.Context, _ domain.TitleFilter) ([]domain.Title, error) { return nil, nil },
+				deleteFn: tt.deleteFn,
+			}
+			router := newTestRouter(uc)
+			w := performDeleteRequest(router, tt.id)
+
+			if w.Code != tt.wantStatus {
+				t.Errorf("status = %d, want %d; body: %s", w.Code, tt.wantStatus, w.Body.String())
+			}
+		})
+	}
 }

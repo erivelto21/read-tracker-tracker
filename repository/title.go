@@ -84,14 +84,11 @@ func (r *MongoTitleRepository) FindByExternalID(ctx context.Context, externalID 
 }
 
 // DeleteByExternalID permanently removes the title identified by externalID.
-// Returns domain.ErrNotFound when no document matches.
+// Returns nil when no document matches (idempotent no-op).
 func (r *MongoTitleRepository) DeleteByExternalID(ctx context.Context, externalID string) error {
-	result, err := r.collection.DeleteOne(ctx, bson.M{"external_id": externalID})
+	_, err := r.collection.DeleteOne(ctx, bson.M{"external_id": externalID})
 	if err != nil {
 		return fmt.Errorf("repository.DeleteByExternalID: %w", err)
-	}
-	if result.DeletedCount == 0 {
-		return domain.ErrNotFound
 	}
 	return nil
 }

@@ -11,11 +11,12 @@ import (
 
 // fakeTitleRepo is a test double for usecase.TitleRepository.
 type fakeTitleRepo struct {
-	findByNameFn       func(ctx context.Context, name string) (*domain.Title, error)
-	findByExternalIDFn func(ctx context.Context, externalID string) (*domain.Title, error)
-	findAllFn          func(ctx context.Context, filter domain.TitleFilter) ([]domain.Title, error)
-	saveFn             func(ctx context.Context, title *domain.Title) (*domain.Title, error)
-	updateFn           func(ctx context.Context, externalID string, fields domain.TitleUpdate) (*domain.Title, error)
+	findByNameFn          func(ctx context.Context, name string) (*domain.Title, error)
+	findByExternalIDFn    func(ctx context.Context, externalID string) (*domain.Title, error)
+	findAllFn             func(ctx context.Context, filter domain.TitleFilter) ([]domain.Title, error)
+	saveFn                func(ctx context.Context, title *domain.Title) (*domain.Title, error)
+	updateFn              func(ctx context.Context, externalID string, fields domain.TitleUpdate) (*domain.Title, error)
+	deleteByExternalIDFn  func(ctx context.Context, externalID string) error
 }
 
 func (m *fakeTitleRepo) FindByName(ctx context.Context, name string) (*domain.Title, error) {
@@ -42,6 +43,13 @@ func (m *fakeTitleRepo) Update(ctx context.Context, externalID string, fields do
 		return m.updateFn(ctx, externalID, fields)
 	}
 	return nil, nil
+}
+
+func (m *fakeTitleRepo) DeleteByExternalID(ctx context.Context, externalID string) error {
+	if m.deleteByExternalIDFn != nil {
+		return m.deleteByExternalIDFn(ctx, externalID)
+	}
+	return nil
 }
 
 func TestTitleUsecase_Create(t *testing.T) {
@@ -284,4 +292,59 @@ t.Run(tt.name, func(t *testing.T) {
 	}
 })
 }
+}
+
+func TestTitleUsecase_Delete(t *testing.T) {
+	t.Parallel()
+
+	repoErr := errors.New("db error")
+
+	tests := []struct {
+		name                 string
+		deleteByExternalIDFn func(ctx context.Context, id string) error
+		wantErr              error
+	}{
+		{
+			name: "deletes existing title",
+			deleteByExternalIDFn: func(_ context.Context, _ string) error {
+				return nil
+			},
+			wantErr: nil,
+		},
+		{
+			name: "non-existent title is a no-op",
+			deleteByExternalIDFn: func(_ context.Context, _ string) error {
+				return nil
+			},
+			wantErr: nil,
+		},
+		{
+			name: "repository error is propagated",
+			deleteByExternalIDFn: func(_ context.Context, _ string) error {
+				return repoErr
+			},
+			wantErr: repoErr,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			repo := &fakeTitleRepo{
+				deleteByExternalIDFn: tt.deleteByExternalIDFn,
+			}
+			uc := usecase.NewTitleUsecase(repo)
+
+			err := uc.Delete(context.Background(), "some-id")
+
+			if tt.wantErr != nil {
+				if !errors.Is(err, tt.wantErr) {
+					t.Errorf("Delete() error = %v, wantErr %v", err, tt.wantErr)
+				}
+			} else if err != nil {
+				t.Errorf("Delete() unexpected error = %v", err)
+			}
+		})
+	}
 }

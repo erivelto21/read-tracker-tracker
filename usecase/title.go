@@ -56,11 +56,6 @@ func (u *TitleUsecase) List(ctx context.Context, filter domain.TitleFilter) ([]d
 
 // Delete permanently removes the title identified by externalID.
 func (u *TitleUsecase) Delete(ctx context.Context, externalID string) error {
-	_, err := u.repo.FindByExternalID(ctx, externalID)
-	if err != nil {
-		return fmt.Errorf("usecase.Delete: %w", err)
-	}
-
 	if err := u.repo.DeleteByExternalID(ctx, externalID); err != nil {
 		return fmt.Errorf("usecase.Delete: %w", err)
 	}
