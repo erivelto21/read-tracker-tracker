@@ -6,6 +6,8 @@ This document provides instructions for AI coding agents working on this reposit
 
 This is a Golang/Gin implementation of an application designed to track your reading progress across multiple literary works.
 
+Reference: @docs/architecture.md (docs/architecture.md) — contains the system architecture, component responsibilities, and interaction diagrams. AI agents should consult this file for deeper context when working on design or cross-cutting changes.
+
 ## Technology Stack
 
 | Layer | Technology | Version |
