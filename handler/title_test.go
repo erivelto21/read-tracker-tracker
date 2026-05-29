@@ -119,7 +119,7 @@ func TestCreateTitle(t *testing.T) {
 			name: "valid article request (chapter not required)",
 			uc:   successUC,
 			body: map[string]interface{}{
-				"name": "Some Article", "type": "article",
+				"name": "Some Article", "type": "article", "link": linkURL,
 			},
 			wantStatus: http.StatusCreated,
 		},

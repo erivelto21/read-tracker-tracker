@@ -29,8 +29,8 @@ type CreateTitleRequest struct {
 	Chapter *int `json:"chapter" validate:"required_if=Type book,required_if=Type manga,required_if=Type manhua,required_if=Type novel,omitempty,min=-100,max=10000"`
 	// page is required only for book
 	Page *int `json:"page" validate:"required_if=Type book,omitempty,min=0,max=10000"`
-	// link is required for manga, manhua, novel
-	Link        *string `json:"link"        validate:"required_if=Type manga,required_if=Type manhua,required_if=Type novel,omitempty,http_url,max=200"`
+	// link is required for manga, manhua, novel, and article
+	Link        *string `json:"link"        validate:"required_if=Type manga,required_if=Type manhua,required_if=Type novel,required_if=Type article,omitempty,http_url,max=200"`
 	Observation *string `json:"observation" validate:"omitempty,max=500"`
 }
 

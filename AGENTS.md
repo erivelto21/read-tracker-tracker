@@ -258,7 +258,7 @@ Error responses must use code `BAD_REQUEST` and message `"Bad Request"` for all 
 }
 ```
 
-Use `http_url` (not `url`) for any link/URL fields to restrict to HTTP/HTTPS schemes only.
+Use `http_url` (not `url`) for any link/URL fields to restrict to HTTP/HTTPS schemes only. For titles of type `article`, the `link` field is required and must be a valid http(s) URL.
 
 ---
 
