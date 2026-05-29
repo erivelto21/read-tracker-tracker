@@ -40,7 +40,7 @@ definitions:
         minimum: -100
         type: integer
       link:
-        description: link is required for manga, manhua, novel
+        description: link is required for manga, manhua, novel and article
         maxLength: 200
         type: string
       name:

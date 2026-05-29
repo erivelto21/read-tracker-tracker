@@ -258,7 +258,7 @@ const docTemplate = `{
                     "minimum": -100
                 },
                 "link": {
-                    "description": "link is required for manga, manhua, novel",
+                    "description": "link is required for manga, manhua, novel and article",
                     "type": "string",
                     "maxLength": 200
                 },
