@@ -1,20 +1,39 @@
-name: Validate CI
+name: validate and publish
 
 on:
   pull_request:
+  push:
+    branches:
+      - main
 
 jobs:
   commit-message:
+    if: github.event_name == 'pull_request'
     uses: erivelto21/ci-templates/.github/workflows/validate-pull-request-commit-messages.yml@main
     with:
       commit_range: ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}
 
   go-validation:
+    if: github.event_name == 'pull_request'
     needs:
       - commit-message
     uses: erivelto21/ci-templates/.github/workflows/validate-pull-request-go.yml@main
 
+  publish-image:
+    if: github.event_name == 'push'
+    uses: erivelto21/ci-templates/.github/workflows/publish-image.yml@main
+    with:
+      registry: ${{ vars.REGISTRY }}
+      namespace: read-tracker
+      image_name: ${{ github.event.repository.name }}
+      dockerfile_path: docker/Dockerfile.api
+      build_context: .
+    secrets:
+      registry_username: ${{ secrets.REGISTRY_USERNAME }}
+      registry_password: ${{ secrets.REGISTRY_PASSWORD }}
+
   ci:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     needs:
       - commit-message
