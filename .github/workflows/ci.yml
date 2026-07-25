@@ -22,13 +22,52 @@ jobs:
   debug-publish-vars:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
+    environment: production
+    outputs:
+      registry: ${{ steps.publish-vars.outputs.registry }}
+      registry_namespace: ${{ steps.publish-vars.outputs.registry_namespace }}
+      image_name: ${{ steps.publish-vars.outputs.image_name }}
     steps:
       - name: Debug publish vars
+        id: publish-vars
         shell: bash
+        env:
+          REGISTRY: ${{ vars.REGISTRY }}
+          REGISTRY_NAMESPACE: ${{ vars.REGISTRY_NAMESPACE }}
+          IMAGE_NAME: ${{ vars.IMAGE_NAME }}
         run: |
-          echo "REGISTRY=${{ vars.REGISTRY }}"
-          echo "REGISTRY_NAMESPACE=${{ vars.REGISTRY_NAMESPACE }}"
-          echo "IMAGE_NAME=${{ vars.IMAGE_NAME }}"
+          echo "GITHUB_REPOSITORY=${{ github.repository }}"
+          echo "GITHUB_EVENT_NAME=${{ github.event_name }}"
+          echo "GITHUB_REF=${{ github.ref }}"
+          echo "GITHUB_ENVIRONMENT=production"
+          echo "REGISTRY=${REGISTRY:-<empty>}"
+          echo "REGISTRY_NAMESPACE=${REGISTRY_NAMESPACE:-<empty>}"
+          echo "IMAGE_NAME=${IMAGE_NAME:-<empty>}"
+
+          missing=false
+
+          if [ -z "$REGISTRY" ]; then
+            echo "::error title=Missing REGISTRY::Create REGISTRY as a production environment variable or repository variable in ${{ github.repository }}."
+            missing=true
+          fi
+
+          if [ -z "$REGISTRY_NAMESPACE" ]; then
+            echo "::error title=Missing REGISTRY_NAMESPACE::Create REGISTRY_NAMESPACE as a production environment variable or repository variable in ${{ github.repository }}."
+            missing=true
+          fi
+
+          if [ -z "$IMAGE_NAME" ]; then
+            echo "::error title=Missing IMAGE_NAME::Create IMAGE_NAME as a production environment variable or repository variable in ${{ github.repository }}."
+            missing=true
+          fi
+
+          if [ "$missing" = true ]; then
+            exit 1
+          fi
+
+          echo "registry=$REGISTRY" >>"$GITHUB_OUTPUT"
+          echo "registry_namespace=$REGISTRY_NAMESPACE" >>"$GITHUB_OUTPUT"
+          echo "image_name=$IMAGE_NAME" >>"$GITHUB_OUTPUT"
 
   publish-image:
     if: github.event_name == 'push'
@@ -36,9 +75,9 @@ jobs:
       - debug-publish-vars
     uses: erivelto21/ci-templates/.github/workflows/publish-image.yml@main
     with:
-      registry: ${{ vars.REGISTRY }}
-      namespace: ${{ vars.REGISTRY_NAMESPACE }}
-      image_name: ${{ vars.IMAGE_NAME }}
+      registry: ${{ needs.debug-publish-vars.outputs.registry }}
+      namespace: ${{ needs.debug-publish-vars.outputs.registry_namespace }}
+      image_name: ${{ needs.debug-publish-vars.outputs.image_name }}
       dockerfile_path: docker/Dockerfile.api
       build_context: .
     secrets:
