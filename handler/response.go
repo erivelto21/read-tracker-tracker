@@ -47,12 +47,11 @@ func RespondTitles(c *gin.Context, status int, titles []domain.Title) {
 
 // RespondError writes a JSON error response with the given status code and error details.
 func RespondError(c *gin.Context, status int, code, message string, details []ErrorDetail) {
-	c.JSON(status, ErrorEnvelope{
-		Error: ErrorBody{
-			Code:    code,
-			Message: message,
-			Details: details,
-		},
+	c.JSON(status, ErrorEnvelope{Error: ErrorBody{
+		Code: code,
+		Message: message,
+		Details: details,
+	},
 	})
 }
 
