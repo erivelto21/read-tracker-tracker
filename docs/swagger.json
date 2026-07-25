@@ -1,7 +1,7 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "API for tracking reading progress of books, manga, manhua, novels, and articles.",
+        "description": "API for tracking reading progress of books, manga, manhua, novels, and articles..",
         "title": "Read Tracker API",
         "contact": {},
         "version": "1.0"
