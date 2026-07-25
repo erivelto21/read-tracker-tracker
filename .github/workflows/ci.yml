@@ -20,6 +20,7 @@ jobs:
     uses: erivelto21/ci-templates/.github/workflows/validate-pull-request-go.yml@main
 
   publish-image:
+    environment: prod
     if: github.event_name == 'push'
     uses: erivelto21/ci-templates/.github/workflows/publish-image.yml@main
     with:
