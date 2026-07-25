@@ -19,8 +19,21 @@ jobs:
       - commit-message
     uses: erivelto21/ci-templates/.github/workflows/validate-pull-request-go.yml@main
 
+  debug-publish-vars:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Debug publish vars
+        shell: bash
+        run: |
+          echo "REGISTRY=${{ vars.REGISTRY }}"
+          echo "REGISTRY_NAMESPACE=${{ vars.REGISTRY_NAMESPACE }}"
+          echo "IMAGE_NAME=${{ vars.IMAGE_NAME }}"
+
   publish-image:
     if: github.event_name == 'push'
+    needs:
+      - debug-publish-vars
     uses: erivelto21/ci-templates/.github/workflows/publish-image.yml@main
     with:
       registry: ${{ vars.REGISTRY }}
