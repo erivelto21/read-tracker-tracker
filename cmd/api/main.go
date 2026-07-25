@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	ginSwagger "github.com/swaggo/gin-swagger"
 	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
