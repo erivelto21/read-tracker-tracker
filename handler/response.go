@@ -3,8 +3,8 @@ package handler
 import (
 	"net/http"
 
-	"github.com/gin-gonic/gin"
 	"github.com/erivelto/read-tracker/tracker/domain"
+	"github.com/gin-gonic/gin"
 )
 
 // DataEnvelope wraps a successful response payload.
