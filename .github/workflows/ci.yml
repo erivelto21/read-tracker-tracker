@@ -1,4 +1,4 @@
-name: Pull Request CI
+name: Validate CI
 
 on:
   pull_request:
@@ -11,3 +11,14 @@ jobs:
 
   go-validation:
     uses: erivelto21/ci-templates/.github/workflows/validate-pull-request-go.yml@main
+
+  ci:
+    runs-on: ubuntu-latest
+    needs:
+      - commit-message
+      - go-validation
+
+    steps:
+      - name: Mark CI complete
+        shell: bash
+        run: echo "CI passed"
