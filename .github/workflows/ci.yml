@@ -24,8 +24,8 @@ jobs:
     uses: erivelto21/ci-templates/.github/workflows/publish-image.yml@main
     with:
       registry: ${{ vars.REGISTRY }}
-      namespace: read-tracker
-      image_name: ${{ github.event.repository.name }}
+      namespace: ${{ vars.REGISTRY_NAMESPACE }}
+      image_name: ${{ vars.IMAGE_NAME }}
       dockerfile_path: docker/Dockerfile.api
       build_context: .
     secrets:
