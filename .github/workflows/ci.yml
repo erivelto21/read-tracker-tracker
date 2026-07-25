@@ -1,0 +1,13 @@
+name: Pull Request CI
+
+on:
+  pull_request:
+
+jobs:
+  commit-message:
+    uses: erivelto21/ci-templates/.github/workflows/validate-pull-request-commit-messages.yml@main
+    with:
+      commit_range: ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}
+
+  go-validation:
+    uses: erivelto21/ci-templates/.github/workflows/validate-pull-request-go.yml@main
