@@ -11,12 +11,12 @@ import (
 
 // fakeTitleRepo is a test double for usecase.TitleRepository.
 type fakeTitleRepo struct {
-	findByNameFn          func(ctx context.Context, name string) (*domain.Title, error)
-	findByExternalIDFn    func(ctx context.Context, externalID string) (*domain.Title, error)
-	findAllFn             func(ctx context.Context, filter domain.TitleFilter) ([]domain.Title, error)
-	saveFn                func(ctx context.Context, title *domain.Title) (*domain.Title, error)
-	updateFn              func(ctx context.Context, externalID string, fields domain.TitleUpdate) (*domain.Title, error)
-	deleteByExternalIDFn  func(ctx context.Context, externalID string) error
+	findByNameFn         func(ctx context.Context, name string) (*domain.Title, error)
+	findByExternalIDFn   func(ctx context.Context, externalID string) (*domain.Title, error)
+	findAllFn            func(ctx context.Context, filter domain.TitleFilter) ([]domain.Title, error)
+	saveFn               func(ctx context.Context, title *domain.Title) (*domain.Title, error)
+	updateFn             func(ctx context.Context, externalID string, fields domain.TitleUpdate) (*domain.Title, error)
+	deleteByExternalIDFn func(ctx context.Context, externalID string) error
 }
 
 func (m *fakeTitleRepo) FindByName(ctx context.Context, name string) (*domain.Title, error) {
@@ -134,164 +134,164 @@ func TestTitleUsecase_Create(t *testing.T) {
 }
 
 func TestTitleUsecase_List(t *testing.T) {
-t.Parallel()
+	t.Parallel()
 
-manga := domain.Manga
-titles := []domain.Title{
-{ExternalID: "abc", Name: "Berserk", Type: domain.Manga},
-}
-repoErr := errors.New("db error")
+	manga := domain.Manga
+	titles := []domain.Title{
+		{ExternalID: "abc", Name: "Berserk", Type: domain.Manga},
+	}
+	repoErr := errors.New("db error")
 
-tests := []struct {
-name        string
-filter      domain.TitleFilter
-findAllFn   func(ctx context.Context, filter domain.TitleFilter) ([]domain.Title, error)
-wantErr     error
-wantDataLen int
-}{
-{
-name:   "delegates filter to repository",
-filter: domain.TitleFilter{Type: &manga},
-findAllFn: func(_ context.Context, f domain.TitleFilter) ([]domain.Title, error) {
-if f.Type == nil || *f.Type != domain.Manga {
-t.Errorf("expected manga filter, got %v", f.Type)
-}
-return titles, nil
-},
-wantDataLen: 1,
-},
-{
-name:   "returns empty slice when no matches",
-filter: domain.TitleFilter{},
-findAllFn: func(_ context.Context, _ domain.TitleFilter) ([]domain.Title, error) {
-return []domain.Title{}, nil
-},
-wantDataLen: 0,
-},
-{
-name:   "propagates repository error",
-filter: domain.TitleFilter{},
-findAllFn: func(_ context.Context, _ domain.TitleFilter) ([]domain.Title, error) {
-return nil, repoErr
-},
-wantErr: repoErr,
-},
-}
+	tests := []struct {
+		name        string
+		filter      domain.TitleFilter
+		findAllFn   func(ctx context.Context, filter domain.TitleFilter) ([]domain.Title, error)
+		wantErr     error
+		wantDataLen int
+	}{
+		{
+			name:   "delegates filter to repository",
+			filter: domain.TitleFilter{Type: &manga},
+			findAllFn: func(_ context.Context, f domain.TitleFilter) ([]domain.Title, error) {
+				if f.Type == nil || *f.Type != domain.Manga {
+					t.Errorf("expected manga filter, got %v", f.Type)
+				}
+				return titles, nil
+			},
+			wantDataLen: 1,
+		},
+		{
+			name:   "returns empty slice when no matches",
+			filter: domain.TitleFilter{},
+			findAllFn: func(_ context.Context, _ domain.TitleFilter) ([]domain.Title, error) {
+				return []domain.Title{}, nil
+			},
+			wantDataLen: 0,
+		},
+		{
+			name:   "propagates repository error",
+			filter: domain.TitleFilter{},
+			findAllFn: func(_ context.Context, _ domain.TitleFilter) ([]domain.Title, error) {
+				return nil, repoErr
+			},
+			wantErr: repoErr,
+		},
+	}
 
-for _, tt := range tests {
-t.Run(tt.name, func(t *testing.T) {
-t.Parallel()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 
-repo := &fakeTitleRepo{
-findByNameFn: func(_ context.Context, _ string) (*domain.Title, error) {
-return nil, domain.ErrNotFound
-},
-findAllFn: tt.findAllFn,
-saveFn: func(_ context.Context, t *domain.Title) (*domain.Title, error) {
-return t, nil
-},
-}
-uc := usecase.NewTitleUsecase(repo)
+			repo := &fakeTitleRepo{
+				findByNameFn: func(_ context.Context, _ string) (*domain.Title, error) {
+					return nil, domain.ErrNotFound
+				},
+				findAllFn: tt.findAllFn,
+				saveFn: func(_ context.Context, t *domain.Title) (*domain.Title, error) {
+					return t, nil
+				},
+			}
+			uc := usecase.NewTitleUsecase(repo)
 
-got, err := uc.List(context.Background(), tt.filter)
+			got, err := uc.List(context.Background(), tt.filter)
 
-if tt.wantErr != nil {
-if !errors.Is(err, tt.wantErr) {
-t.Errorf("List() error = %v, wantErr %v", err, tt.wantErr)
-}
-return
-}
-if err != nil {
-t.Errorf("List() unexpected error = %v", err)
-}
-if len(got) != tt.wantDataLen {
-t.Errorf("List() len = %d, want %d", len(got), tt.wantDataLen)
-}
-})
-}
+			if tt.wantErr != nil {
+				if !errors.Is(err, tt.wantErr) {
+					t.Errorf("List() error = %v, wantErr %v", err, tt.wantErr)
+				}
+				return
+			}
+			if err != nil {
+				t.Errorf("List() unexpected error = %v", err)
+			}
+			if len(got) != tt.wantDataLen {
+				t.Errorf("List() len = %d, want %d", len(got), tt.wantDataLen)
+			}
+		})
+	}
 }
 
 func TestTitleUsecase_Update(t *testing.T) {
-t.Parallel()
-
-chapter := 10
-existing := &domain.Title{ExternalID: "uuid-1", Name: "Berserk", Type: domain.Manga}
-repoErr := errors.New("db error")
-
-tests := []struct {
-name               string
-findByExternalIDFn func(ctx context.Context, id string) (*domain.Title, error)
-updateFn           func(ctx context.Context, id string, f domain.TitleUpdate) (*domain.Title, error)
-wantErr            error
-wantNilData        bool
-}{
-{
-	name: "success",
-	findByExternalIDFn: func(_ context.Context, _ string) (*domain.Title, error) {
-		return existing, nil
-	},
-	updateFn: func(_ context.Context, _ string, f domain.TitleUpdate) (*domain.Title, error) {
-		updated := *existing
-		updated.Chapter = f.Chapter
-		return &updated, nil
-	},
-},
-{
-	name: "title not found",
-	findByExternalIDFn: func(_ context.Context, _ string) (*domain.Title, error) {
-		return nil, domain.ErrNotFound
-	},
-	wantErr:     domain.ErrNotFound,
-	wantNilData: true,
-},
-{
-	name: "repository update error",
-	findByExternalIDFn: func(_ context.Context, _ string) (*domain.Title, error) {
-		return existing, nil
-	},
-	updateFn: func(_ context.Context, _ string, _ domain.TitleUpdate) (*domain.Title, error) {
-		return nil, repoErr
-	},
-	wantErr:     repoErr,
-	wantNilData: true,
-},
-}
-
-for _, tt := range tests {
-t.Run(tt.name, func(t *testing.T) {
 	t.Parallel()
 
-	repo := &fakeTitleRepo{
-		findByNameFn: func(_ context.Context, _ string) (*domain.Title, error) {
-			return nil, domain.ErrNotFound
+	chapter := 10
+	existing := &domain.Title{ExternalID: "uuid-1", Name: "Berserk", Type: domain.Manga}
+	repoErr := errors.New("db error")
+
+	tests := []struct {
+		name               string
+		findByExternalIDFn func(ctx context.Context, id string) (*domain.Title, error)
+		updateFn           func(ctx context.Context, id string, f domain.TitleUpdate) (*domain.Title, error)
+		wantErr            error
+		wantNilData        bool
+	}{
+		{
+			name: "success",
+			findByExternalIDFn: func(_ context.Context, _ string) (*domain.Title, error) {
+				return existing, nil
+			},
+			updateFn: func(_ context.Context, _ string, f domain.TitleUpdate) (*domain.Title, error) {
+				updated := *existing
+				updated.Chapter = f.Chapter
+				return &updated, nil
+			},
 		},
-		findByExternalIDFn: tt.findByExternalIDFn,
-		saveFn: func(_ context.Context, t *domain.Title) (*domain.Title, error) {
-			return t, nil
+		{
+			name: "title not found",
+			findByExternalIDFn: func(_ context.Context, _ string) (*domain.Title, error) {
+				return nil, domain.ErrNotFound
+			},
+			wantErr:     domain.ErrNotFound,
+			wantNilData: true,
 		},
-		updateFn: tt.updateFn,
-	}
-	uc := usecase.NewTitleUsecase(repo)
-
-	fields := domain.TitleUpdate{Chapter: &chapter}
-	got, err := uc.Update(context.Background(), "uuid-1", fields)
-
-	if tt.wantErr != nil {
-		if !errors.Is(err, tt.wantErr) {
-			t.Errorf("Update() error = %v, wantErr %v", err, tt.wantErr)
-		}
-	} else if err != nil {
-		t.Errorf("Update() unexpected error = %v", err)
+		{
+			name: "repository update error",
+			findByExternalIDFn: func(_ context.Context, _ string) (*domain.Title, error) {
+				return existing, nil
+			},
+			updateFn: func(_ context.Context, _ string, _ domain.TitleUpdate) (*domain.Title, error) {
+				return nil, repoErr
+			},
+			wantErr:     repoErr,
+			wantNilData: true,
+		},
 	}
 
-	if tt.wantNilData && got != nil {
-		t.Errorf("Update() expected nil result, got %v", got)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			repo := &fakeTitleRepo{
+				findByNameFn: func(_ context.Context, _ string) (*domain.Title, error) {
+					return nil, domain.ErrNotFound
+				},
+				findByExternalIDFn: tt.findByExternalIDFn,
+				saveFn: func(_ context.Context, t *domain.Title) (*domain.Title, error) {
+					return t, nil
+				},
+				updateFn: tt.updateFn,
+			}
+			uc := usecase.NewTitleUsecase(repo)
+
+			fields := domain.TitleUpdate{Chapter: &chapter}
+			got, err := uc.Update(context.Background(), "uuid-1", fields)
+
+			if tt.wantErr != nil {
+				if !errors.Is(err, tt.wantErr) {
+					t.Errorf("Update() error = %v, wantErr %v", err, tt.wantErr)
+				}
+			} else if err != nil {
+				t.Errorf("Update() unexpected error = %v", err)
+			}
+
+			if tt.wantNilData && got != nil {
+				t.Errorf("Update() expected nil result, got %v", got)
+			}
+			if !tt.wantNilData && err == nil && got == nil {
+				t.Error("Update() expected non-nil result")
+			}
+		})
 	}
-	if !tt.wantNilData && err == nil && got == nil {
-		t.Error("Update() expected non-nil result")
-	}
-})
-}
 }
 
 func TestTitleUsecase_Delete(t *testing.T) {
