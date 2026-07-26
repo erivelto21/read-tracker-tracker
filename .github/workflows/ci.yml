@@ -23,14 +23,8 @@ jobs:
     if: github.event_name == 'push'
     uses: erivelto21/ci-templates/.github/workflows/publish-image.yml@main
     with:
-      registry: ${{ vars.REGISTRY }}
-      namespace: ${{ vars.REGISTRY_NAMESPACE }}
-      image_name: ${{ vars.IMAGE_NAME }}
       dockerfile_path: docker/Dockerfile.api
       build_context: .
-    secrets:
-      registry_username: ${{ secrets.REGISTRY_USERNAME }}
-      registry_password: ${{ secrets.REGISTRY_PASSWORD }}
 
   ci:
     if: github.event_name == 'pull_request'
