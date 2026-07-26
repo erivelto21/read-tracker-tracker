@@ -23,7 +23,6 @@ jobs:
     if: github.event_name == 'push'
     uses: erivelto21/ci-templates/.github/workflows/publish-image.yml@main
     with:
-      dockerfile_path: docker/Dockerfile.api
       build_context: .
     secrets: inherit
 
