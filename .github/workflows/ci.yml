@@ -25,6 +25,7 @@ jobs:
     with:
       dockerfile_path: docker/Dockerfile.api
       build_context: .
+    secrets: inherit
 
   ci:
     if: github.event_name == 'pull_request'
