@@ -26,6 +26,16 @@ jobs:
       build_context: .
     secrets: inherit
 
+  deploy:
+    if: github.event_name == 'push'
+    needs: publish-image
+    uses: erivelto21/ci-templates/.github/workflows/deploy-kubernetes.yml@main
+    with:
+      chart_path: deploy/helm/tracker
+      release_name: read-tracker
+      namespace: read-tracker
+    secrets: inherit
+
   ci:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
