@@ -31,8 +31,8 @@ jobs:
     needs: publish-image
     uses: erivelto21/ci-templates/.github/workflows/deploy-kubernetes.yml@main
     with:
-      chart_path: deploy/helm/tracker
-      release_name: read-tracker
+      chart_path: deploy/helm/api
+      release_name: read-tracker-api
       namespace: read-tracker
     secrets: inherit
 
