@@ -32,7 +32,7 @@ jobs:
     uses: erivelto21/ci-templates/.github/workflows/deploy-kubernetes.yml@main
     with:
       chart_path: deploy/helm/api
-      release_name: read-tracker-api
+      release_name: read-tracker
       namespace: read-tracker
     secrets: inherit
 
