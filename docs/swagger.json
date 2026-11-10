@@ -8,6 +8,380 @@
     },
     "basePath": "/v1",
     "paths": {
+        "/chapters": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "chapters"
+                ],
+                "summary": "List chapters",
+                "parameters": [
+                    {
+                        "type": "boolean",
+                        "description": "Only unread chapters",
+                        "name": "unread",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Exclude chapters imported on a title's first crawl",
+                        "name": "exclude_imported",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by title id",
+                        "name": "title_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by source host",
+                        "name": "host",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Pagination cursor from a previous response",
+                        "name": "cursor",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size (1-200, default 50)",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ChaptersEnvelope"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorEnvelope"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorEnvelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/chapters/unread-count": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "chapters"
+                ],
+                "summary": "Count unread chapters",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Scope the count to one title",
+                        "name": "title_id",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/domain.UnreadCount"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorEnvelope"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorEnvelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/chapters/{id}/read": {
+            "patch": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "chapters"
+                ],
+                "summary": "Mark a chapter as read",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Chapter ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/domain.ChapterView"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorEnvelope"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorEnvelope"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorEnvelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/sources": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sources"
+                ],
+                "summary": "List sources",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.SourcesEnvelope"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorEnvelope"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sources"
+                ],
+                "summary": "Create a source",
+                "parameters": [
+                    {
+                        "description": "Source to create",
+                        "name": "source",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.CreateSourceRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/domain.Source"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorEnvelope"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorEnvelope"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorEnvelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/sources/{id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sources"
+                ],
+                "summary": "Get a source",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Source ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/domain.Source"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorEnvelope"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorEnvelope"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorEnvelope"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "sources"
+                ],
+                "summary": "Delete a source",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Source ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorEnvelope"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorEnvelope"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorEnvelope"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sources"
+                ],
+                "summary": "Update a source",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Source ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Fields to update",
+                        "name": "source",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.UpdateSourceRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/domain.Source"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorEnvelope"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorEnvelope"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorEnvelope"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorEnvelope"
+                        }
+                    }
+                }
+            }
+        },
         "/titles": {
             "get": {
                 "produces": [
@@ -194,6 +568,154 @@
         }
     },
     "definitions": {
+        "domain.ChapterView": {
+            "type": "object",
+            "properties": {
+                "discoveredAt": {
+                    "type": "string"
+                },
+                "host": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "imported": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "number": {
+                    "type": "number"
+                },
+                "numberRaw": {
+                    "type": "string"
+                },
+                "publishedAt": {
+                    "type": "string"
+                },
+                "readAt": {
+                    "type": "string"
+                },
+                "titleId": {
+                    "type": "string"
+                },
+                "titleName": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "domain.Source": {
+            "type": "object",
+            "properties": {
+                "blocked": {
+                    "type": "boolean"
+                },
+                "consecutiveFailures": {
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "description": "Provenance. A database edit has no pull request behind it, so the document records who\nchanged it and when.",
+                    "type": "string"
+                },
+                "dateSelector": {
+                    "type": "string"
+                },
+                "delayMs": {
+                    "type": "integer"
+                },
+                "enabled": {
+                    "type": "boolean"
+                },
+                "failing": {
+                    "type": "boolean"
+                },
+                "feedUrl": {
+                    "type": "string"
+                },
+                "host": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "itemSelector": {
+                    "type": "string"
+                },
+                "itemsFound": {
+                    "type": "integer"
+                },
+                "jsonPath": {
+                    "type": "string"
+                },
+                "jsonUrl": {
+                    "type": "string"
+                },
+                "lastError": {
+                    "type": "string"
+                },
+                "lastOkAt": {
+                    "type": "string"
+                },
+                "lastRunAt": {
+                    "description": "Runtime health. Written by the crawler, read here, never written by this API.",
+                    "type": "string"
+                },
+                "linkAttr": {
+                    "type": "string"
+                },
+                "listUrl": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "numberPattern": {
+                    "type": "string"
+                },
+                "priority": {
+                    "type": "integer"
+                },
+                "profile": {
+                    "type": "string"
+                },
+                "strategy": {
+                    "$ref": "#/definitions/domain.SourceStrategy"
+                },
+                "titleSelector": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "type": "string"
+                },
+                "urlPattern": {
+                    "type": "string"
+                },
+                "validatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "domain.SourceStrategy": {
+            "type": "string",
+            "enum": [
+                "feed",
+                "css",
+                "json"
+            ],
+            "x-enum-varnames": [
+                "SourceStrategyFeed",
+                "SourceStrategyCSS",
+                "SourceStrategyJSON"
+            ]
+        },
         "domain.Title": {
             "type": "object",
             "properties": {
@@ -237,6 +759,120 @@
                 "Article"
             ]
         },
+        "domain.UnreadCount": {
+            "type": "object",
+            "properties": {
+                "excludingImported": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handler.ChaptersEnvelope": {
+            "type": "object",
+            "properties": {
+                "chapters": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.ChapterView"
+                    }
+                },
+                "nextCursor": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.CreateSourceRequest": {
+            "type": "object",
+            "required": [
+                "host",
+                "name",
+                "profile",
+                "strategy",
+                "urlPattern"
+            ],
+            "properties": {
+                "dateSelector": {
+                    "type": "string",
+                    "maxLength": 500
+                },
+                "delayMs": {
+                    "type": "integer",
+                    "maximum": 60000,
+                    "minimum": 0
+                },
+                "enabled": {
+                    "type": "boolean"
+                },
+                "feedUrl": {
+                    "type": "string",
+                    "maxLength": 500
+                },
+                "host": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "itemSelector": {
+                    "type": "string",
+                    "maxLength": 500
+                },
+                "jsonPath": {
+                    "type": "string",
+                    "maxLength": 500
+                },
+                "jsonUrl": {
+                    "type": "string",
+                    "maxLength": 500
+                },
+                "linkAttr": {
+                    "type": "string",
+                    "maxLength": 100
+                },
+                "listUrl": {
+                    "type": "string",
+                    "maxLength": 500
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 120
+                },
+                "numberPattern": {
+                    "type": "string",
+                    "maxLength": 500
+                },
+                "priority": {
+                    "type": "integer",
+                    "maximum": 1000,
+                    "minimum": 0
+                },
+                "profile": {
+                    "type": "string",
+                    "maxLength": 60
+                },
+                "strategy": {
+                    "enum": [
+                        "feed",
+                        "css",
+                        "json"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/domain.SourceStrategy"
+                        }
+                    ]
+                },
+                "titleSelector": {
+                    "type": "string",
+                    "maxLength": 500
+                },
+                "urlPattern": {
+                    "type": "string",
+                    "maxLength": 500
+                }
+            }
+        },
         "handler.CreateTitleRequest": {
             "type": "object",
             "required": [
@@ -251,7 +887,7 @@
                     "minimum": -100
                 },
                 "link": {
-                    "description": "link is required for manga, manhua, novel and article",
+                    "description": "link is required for manga, manhua, novel, and article",
                     "type": "string",
                     "maxLength": 200
                 },
@@ -322,6 +958,17 @@
                 }
             }
         },
+        "handler.SourcesEnvelope": {
+            "type": "object",
+            "properties": {
+                "sources": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.Source"
+                    }
+                }
+            }
+        },
         "handler.TitlesEnvelope": {
             "type": "object",
             "properties": {
@@ -330,6 +977,88 @@
                     "items": {
                         "$ref": "#/definitions/domain.Title"
                     }
+                }
+            }
+        },
+        "handler.UpdateSourceRequest": {
+            "type": "object",
+            "properties": {
+                "dateSelector": {
+                    "type": "string",
+                    "maxLength": 500
+                },
+                "delayMs": {
+                    "type": "integer",
+                    "maximum": 60000,
+                    "minimum": 0
+                },
+                "enabled": {
+                    "type": "boolean"
+                },
+                "feedUrl": {
+                    "type": "string",
+                    "maxLength": 500
+                },
+                "host": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "itemSelector": {
+                    "type": "string",
+                    "maxLength": 500
+                },
+                "jsonPath": {
+                    "type": "string",
+                    "maxLength": 500
+                },
+                "jsonUrl": {
+                    "type": "string",
+                    "maxLength": 500
+                },
+                "linkAttr": {
+                    "type": "string",
+                    "maxLength": 100
+                },
+                "listUrl": {
+                    "type": "string",
+                    "maxLength": 500
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 120
+                },
+                "numberPattern": {
+                    "type": "string",
+                    "maxLength": 500
+                },
+                "priority": {
+                    "type": "integer",
+                    "maximum": 1000,
+                    "minimum": 0
+                },
+                "profile": {
+                    "type": "string",
+                    "maxLength": 60
+                },
+                "strategy": {
+                    "enum": [
+                        "feed",
+                        "css",
+                        "json"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/domain.SourceStrategy"
+                        }
+                    ]
+                },
+                "titleSelector": {
+                    "type": "string",
+                    "maxLength": 500
+                },
+                "urlPattern": {
+                    "type": "string",
+                    "maxLength": 500
                 }
             }
         },

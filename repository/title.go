@@ -83,6 +83,21 @@ func (r *MongoTitleRepository) FindByExternalID(ctx context.Context, externalID 
 	return &title, nil
 }
 
+// FindByInternalID retrieves a title by its MongoDB identifier. Chapters store this identifier
+// rather than the public UUID, so marking a chapter read can resolve its title in one query
+// instead of two. Returns domain.ErrNotFound if it does not exist.
+func (r *MongoTitleRepository) FindByInternalID(ctx context.Context, id bson.ObjectID) (*domain.Title, error) {
+	var title domain.Title
+	err := r.collection.FindOne(ctx, bson.M{"_id": id}).Decode(&title)
+	if errors.Is(err, mongo.ErrNoDocuments) {
+		return nil, domain.ErrNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("repository.FindByInternalID: %w", err)
+	}
+	return &title, nil
+}
+
 // DeleteByExternalID permanently removes the title identified by externalID.
 // Returns nil when no document matches (idempotent no-op).
 func (r *MongoTitleRepository) DeleteByExternalID(ctx context.Context, externalID string) error {

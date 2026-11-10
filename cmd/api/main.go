@@ -65,9 +65,61 @@ func main() {
 		os.Exit(1)
 	}
 
+	chaptersCol := client.Database(cfg.DBName).Collection("chapters")
+
+	// The chapters indexes are owned by the tracker, not the crawler: one side must create them,
+	// and the API is the side that can fail fast at startup.
+	chapterIndexes := []mongo.IndexModel{
+		{
+			Keys:    bson.D{{Key: "dedup_key", Value: 1}},
+			Options: options.Index().SetUnique(true),
+		},
+		{
+			Keys: bson.D{
+				{Key: "title_id", Value: 1},
+				{Key: "discovered_at", Value: -1},
+				{Key: "_id", Value: -1},
+			},
+		},
+		{
+			Keys: bson.D{
+				{Key: "read_at", Value: 1},
+				{Key: "imported", Value: 1},
+				{Key: "discovered_at", Value: -1},
+			},
+		},
+	}
+	if _, err = chaptersCol.Indexes().CreateMany(ctx, chapterIndexes); err != nil {
+		logger.Error("failed to create chapters indexes", "error", err)
+		os.Exit(1)
+	}
+
 	titleRepo := repository.NewMongoTitleRepository(titlesCol)
 	titleUC := usecase.NewTitleUsecase(titleRepo)
 	titleHandler := handler.NewTitleHandler(titleUC)
+
+	chapterRepo := repository.NewMongoChapterRepository(chaptersCol)
+	chapterUC := usecase.NewChapterUsecase(chapterRepo, titleRepo, nil)
+	chapterHandler := handler.NewChapterHandler(chapterUC)
+
+	sourcesCol := client.Database(cfg.DBName).Collection("sites")
+
+	// A source's host and URL pattern together decide which titles it crawls. Two documents with
+	// the same pair would make the crawler's match order the only thing choosing between them.
+	sourceIndexes := []mongo.IndexModel{
+		{
+			Keys:    bson.D{{Key: "host", Value: 1}, {Key: "url_pattern", Value: 1}},
+			Options: options.Index().SetUnique(true),
+		},
+	}
+	if _, err = sourcesCol.Indexes().CreateMany(ctx, sourceIndexes); err != nil {
+		logger.Error("failed to create sources indexes", "error", err)
+		os.Exit(1)
+	}
+
+	sourceRepo := repository.NewMongoSourceRepository(sourcesCol)
+	sourceUC := usecase.NewSourceUsecase(sourceRepo)
+	sourceHandler := handler.NewSourceHandler(sourceUC)
 
 	router := gin.New()
 	router.Use(gin.Recovery())
@@ -81,6 +133,8 @@ func main() {
 
 	v1 := router.Group("/v1")
 	titleHandler.RegisterRoutes(v1)
+	chapterHandler.RegisterRoutes(v1)
+	sourceHandler.RegisterRoutes(v1)
 
 	logger.Info("tracker api starting", "port", cfg.Port)
 	if err = router.Run(":" + cfg.Port); err != nil {
