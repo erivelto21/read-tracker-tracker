@@ -1,5 +1,108 @@
 basePath: /v1
 definitions:
+  domain.ChapterView:
+    properties:
+      discoveredAt:
+        type: string
+      host:
+        type: string
+      id:
+        type: string
+      imported:
+        type: boolean
+      name:
+        type: string
+      number:
+        type: number
+      numberRaw:
+        type: string
+      publishedAt:
+        type: string
+      readAt:
+        type: string
+      titleId:
+        type: string
+      titleName:
+        type: string
+      url:
+        type: string
+    type: object
+  domain.Source:
+    properties:
+      blocked:
+        type: boolean
+      consecutiveFailures:
+        type: integer
+      createdAt:
+        description: |-
+          Provenance. A database edit has no pull request behind it, so the document records who
+          changed it and when.
+        type: string
+      dateSelector:
+        type: string
+      delayMs:
+        type: integer
+      enabled:
+        type: boolean
+      failing:
+        type: boolean
+      feedUrl:
+        type: string
+      host:
+        type: string
+      id:
+        type: string
+      itemSelector:
+        type: string
+      itemsFound:
+        type: integer
+      jsonPath:
+        type: string
+      jsonUrl:
+        type: string
+      lastError:
+        type: string
+      lastOkAt:
+        type: string
+      lastRunAt:
+        description: Runtime health. Written by the crawler, read here, never written
+          by this API.
+        type: string
+      linkAttr:
+        type: string
+      listUrl:
+        type: string
+      name:
+        type: string
+      numberPattern:
+        type: string
+      priority:
+        type: integer
+      profile:
+        type: string
+      strategy:
+        $ref: '#/definitions/domain.SourceStrategy'
+      titleSelector:
+        type: string
+      updatedAt:
+        type: string
+      updatedBy:
+        type: string
+      urlPattern:
+        type: string
+      validatedAt:
+        type: string
+    type: object
+  domain.SourceStrategy:
+    enum:
+    - feed
+    - css
+    - json
+    type: string
+    x-enum-varnames:
+    - SourceStrategyFeed
+    - SourceStrategyCSS
+    - SourceStrategyJSON
   domain.Title:
     properties:
       chapter:
@@ -31,6 +134,87 @@ definitions:
     - Manhua
     - Novel
     - Article
+  domain.UnreadCount:
+    properties:
+      excludingImported:
+        type: integer
+      total:
+        type: integer
+    type: object
+  handler.ChaptersEnvelope:
+    properties:
+      chapters:
+        items:
+          $ref: '#/definitions/domain.ChapterView'
+        type: array
+      nextCursor:
+        type: string
+    type: object
+  handler.CreateSourceRequest:
+    properties:
+      dateSelector:
+        maxLength: 500
+        type: string
+      delayMs:
+        maximum: 60000
+        minimum: 0
+        type: integer
+      enabled:
+        type: boolean
+      feedUrl:
+        maxLength: 500
+        type: string
+      host:
+        maxLength: 255
+        type: string
+      itemSelector:
+        maxLength: 500
+        type: string
+      jsonPath:
+        maxLength: 500
+        type: string
+      jsonUrl:
+        maxLength: 500
+        type: string
+      linkAttr:
+        maxLength: 100
+        type: string
+      listUrl:
+        maxLength: 500
+        type: string
+      name:
+        maxLength: 120
+        type: string
+      numberPattern:
+        maxLength: 500
+        type: string
+      priority:
+        maximum: 1000
+        minimum: 0
+        type: integer
+      profile:
+        maxLength: 60
+        type: string
+      strategy:
+        allOf:
+        - $ref: '#/definitions/domain.SourceStrategy'
+        enum:
+        - feed
+        - css
+        - json
+      titleSelector:
+        maxLength: 500
+        type: string
+      urlPattern:
+        maxLength: 500
+        type: string
+    required:
+    - host
+    - name
+    - profile
+    - strategy
+    - urlPattern
+    type: object
   handler.CreateTitleRequest:
     properties:
       chapter:
@@ -40,7 +224,7 @@ definitions:
         minimum: -100
         type: integer
       link:
-        description: link is required for manga, manhua, novel and article
+        description: link is required for manga, manhua, novel, and article
         maxLength: 200
         type: string
       name:
@@ -91,12 +275,78 @@ definitions:
       error:
         $ref: '#/definitions/handler.ErrorBody'
     type: object
+  handler.SourcesEnvelope:
+    properties:
+      sources:
+        items:
+          $ref: '#/definitions/domain.Source'
+        type: array
+    type: object
   handler.TitlesEnvelope:
     properties:
       titles:
         items:
           $ref: '#/definitions/domain.Title'
         type: array
+    type: object
+  handler.UpdateSourceRequest:
+    properties:
+      dateSelector:
+        maxLength: 500
+        type: string
+      delayMs:
+        maximum: 60000
+        minimum: 0
+        type: integer
+      enabled:
+        type: boolean
+      feedUrl:
+        maxLength: 500
+        type: string
+      host:
+        maxLength: 255
+        type: string
+      itemSelector:
+        maxLength: 500
+        type: string
+      jsonPath:
+        maxLength: 500
+        type: string
+      jsonUrl:
+        maxLength: 500
+        type: string
+      linkAttr:
+        maxLength: 100
+        type: string
+      listUrl:
+        maxLength: 500
+        type: string
+      name:
+        maxLength: 120
+        type: string
+      numberPattern:
+        maxLength: 500
+        type: string
+      priority:
+        maximum: 1000
+        minimum: 0
+        type: integer
+      profile:
+        maxLength: 60
+        type: string
+      strategy:
+        allOf:
+        - $ref: '#/definitions/domain.SourceStrategy'
+        enum:
+        - feed
+        - css
+        - json
+      titleSelector:
+        maxLength: 500
+        type: string
+      urlPattern:
+        maxLength: 500
+        type: string
     type: object
   handler.UpdateTitleRequest:
     properties:
@@ -122,6 +372,250 @@ info:
   title: Read Tracker API
   version: "1.0"
 paths:
+  /chapters:
+    get:
+      parameters:
+      - description: Only unread chapters
+        in: query
+        name: unread
+        type: boolean
+      - description: Exclude chapters imported on a title's first crawl
+        in: query
+        name: exclude_imported
+        type: boolean
+      - description: Filter by title id
+        in: query
+        name: title_id
+        type: string
+      - description: Filter by source host
+        in: query
+        name: host
+        type: string
+      - description: Pagination cursor from a previous response
+        in: query
+        name: cursor
+        type: string
+      - description: Page size (1-200, default 50)
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.ChaptersEnvelope'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+      summary: List chapters
+      tags:
+      - chapters
+  /chapters/{id}/read:
+    patch:
+      parameters:
+      - description: Chapter ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.ChapterView'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+      summary: Mark a chapter as read
+      tags:
+      - chapters
+  /chapters/unread-count:
+    get:
+      parameters:
+      - description: Scope the count to one title
+        in: query
+        name: title_id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.UnreadCount'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+      summary: Count unread chapters
+      tags:
+      - chapters
+  /sources:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.SourcesEnvelope'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+      summary: List sources
+      tags:
+      - sources
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Source to create
+        in: body
+        name: source
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CreateSourceRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/domain.Source'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+      summary: Create a source
+      tags:
+      - sources
+  /sources/{id}:
+    delete:
+      parameters:
+      - description: Source ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+      summary: Delete a source
+      tags:
+      - sources
+    get:
+      parameters:
+      - description: Source ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Source'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+      summary: Get a source
+      tags:
+      - sources
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Source ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Fields to update
+        in: body
+        name: source
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UpdateSourceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Source'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorEnvelope'
+      summary: Update a source
+      tags:
+      - sources
   /titles:
     get:
       parameters:
