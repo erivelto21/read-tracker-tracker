@@ -212,6 +212,15 @@ func TestCreateTitle(t *testing.T) {
 			wantStatus: http.StatusCreated,
 		},
 		{
+			name: "decimal chapter is accepted for manga",
+			uc:   successUC,
+			body: map[string]interface{}{
+				"name": "Berserk", "type": "manga", "chapter": 105.5, "link": linkURL,
+				"selector": "#chapters-list li a",
+			},
+			wantStatus: http.StatusCreated,
+		},
+		{
 			name: "selector missing for manga",
 			uc:   successUC,
 			body: map[string]interface{}{
@@ -473,7 +482,7 @@ func performPatchRequest(router *gin.Engine, id string, body interface{}) *httpt
 func TestUpdateTitle(t *testing.T) {
 	t.Parallel()
 
-	chapter := 5
+	chapter := 5.0
 	existing := &domain.Title{ExternalID: "uuid-1", Name: "Berserk", Type: domain.Manga, Chapter: &chapter}
 
 	tests := []struct {
@@ -489,6 +498,18 @@ func TestUpdateTitle(t *testing.T) {
 			id:   "uuid-1",
 			body: map[string]interface{}{"chapter": 10},
 			updateFn: func(_ context.Context, _ string, _ domain.TitleUpdate) (*domain.Title, error) {
+				return existing, nil
+			},
+			wantStatus: http.StatusOK,
+		},
+		{
+			name: "success - update chapter with a decimal",
+			id:   "uuid-1",
+			body: map[string]interface{}{"chapter": 105.5},
+			updateFn: func(_ context.Context, _ string, f domain.TitleUpdate) (*domain.Title, error) {
+				if f.Chapter == nil || *f.Chapter != 105.5 {
+					t.Errorf("expected chapter 105.5 to reach the usecase, got %v", f.Chapter)
+				}
 				return existing, nil
 			},
 			wantStatus: http.StatusOK,

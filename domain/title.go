@@ -25,7 +25,7 @@ type Title struct {
 	ExternalID  string        `bson:"external_id"        json:"id"`
 	Name        string        `bson:"name"               json:"name"`
 	Type        TitleType     `bson:"type"               json:"type"`
-	Chapter     *int          `bson:"chapter,omitempty"  json:"chapter,omitempty"`
+	Chapter     *float64      `bson:"chapter,omitempty"  json:"chapter,omitempty"`
 	Page        *int          `bson:"page,omitempty"     json:"page,omitempty"`
 	Link        *string       `bson:"link,omitempty"     json:"link,omitempty"`
 	Selector    *string       `bson:"selector,omitempty" json:"selector,omitempty"`
@@ -41,7 +41,7 @@ type TitleFilter struct {
 // TitleUpdate holds the fields that may be changed via a partial update.
 // A nil field means "not provided" and will not be written.
 type TitleUpdate struct {
-	Chapter     *int
+	Chapter     *float64
 	Page        *int
 	Link        *string
 	Selector    *string

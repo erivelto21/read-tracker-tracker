@@ -26,7 +26,7 @@ type CreateTitleRequest struct {
 	Name string           `json:"name" validate:"required,min=3,max=100"`
 	Type domain.TitleType `json:"type" validate:"required,oneof=book manga manhua novel article"`
 	// chapter is required for book, manga, manhua, novel; optional for article
-	Chapter *int `json:"chapter" validate:"required_if=Type book,required_if=Type manga,required_if=Type manhua,required_if=Type novel,omitempty,min=-100,max=10000"`
+	Chapter *float64 `json:"chapter" validate:"required_if=Type book,required_if=Type manga,required_if=Type manhua,required_if=Type novel,omitempty,min=-100,max=10000"`
 	// page is required only for book
 	Page *int `json:"page" validate:"required_if=Type book,omitempty,min=0,max=10000"`
 	// link is required for manga, manhua, novel, and article
@@ -87,11 +87,11 @@ func (h *TitleHandler) RegisterRoutes(rg *gin.RouterGroup) {
 // UpdateTitleRequest is the JSON request body for PATCH /titles/:id.
 // All fields are optional; at least one must be provided.
 type UpdateTitleRequest struct {
-	Chapter     *int    `json:"chapter"     validate:"omitempty,min=-100,max=10000"`
-	Page        *int    `json:"page"        validate:"omitempty,min=0,max=10000"`
-	Link        *string `json:"link"        validate:"omitempty,http_url,max=200"`
-	Selector    *string `json:"selector"    validate:"omitempty,min=1,max=500"`
-	Observation *string `json:"observation" validate:"omitempty,max=500"`
+	Chapter     *float64 `json:"chapter"     validate:"omitempty,min=-100,max=10000"`
+	Page        *int     `json:"page"        validate:"omitempty,min=0,max=10000"`
+	Link        *string  `json:"link"        validate:"omitempty,http_url,max=200"`
+	Selector    *string  `json:"selector"    validate:"omitempty,min=1,max=500"`
+	Observation *string  `json:"observation" validate:"omitempty,max=500"`
 }
 
 // CreateTitle handles POST /titles.

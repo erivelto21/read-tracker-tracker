@@ -205,7 +205,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "chapter": {
-                    "type": "integer"
+                    "type": "number"
                 },
                 "id": {
                     "type": "string"
@@ -256,7 +256,7 @@ const docTemplate = `{
             "properties": {
                 "chapter": {
                     "description": "chapter is required for book, manga, manhua, novel; optional for article",
-                    "type": "integer",
+                    "type": "number",
                     "maximum": 10000,
                     "minimum": -100
                 },
@@ -353,7 +353,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "chapter": {
-                    "type": "integer",
+                    "type": "number",
                     "maximum": 10000,
                     "minimum": -100
                 },

@@ -3,7 +3,7 @@ definitions:
   domain.Title:
     properties:
       chapter:
-        type: integer
+        type: number
       id:
         type: string
       link:
@@ -40,7 +40,7 @@ definitions:
           for article
         maximum: 10000
         minimum: -100
-        type: integer
+        type: number
       link:
         description: link is required for manga, manhua, novel, and article
         maxLength: 200
@@ -112,7 +112,7 @@ definitions:
       chapter:
         maximum: 10000
         minimum: -100
-        type: integer
+        type: number
       link:
         maxLength: 200
         type: string
