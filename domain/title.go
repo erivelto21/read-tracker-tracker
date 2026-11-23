@@ -28,6 +28,7 @@ type Title struct {
 	Chapter     *int          `bson:"chapter,omitempty"  json:"chapter,omitempty"`
 	Page        *int          `bson:"page,omitempty"     json:"page,omitempty"`
 	Link        *string       `bson:"link,omitempty"     json:"link,omitempty"`
+	Selector    *string       `bson:"selector,omitempty" json:"selector,omitempty"`
 	Observation *string       `bson:"observation,omitempty" json:"observation,omitempty"`
 }
 
@@ -43,6 +44,7 @@ type TitleUpdate struct {
 	Chapter     *int
 	Page        *int
 	Link        *string
+	Selector    *string
 	Observation *string
 }
 

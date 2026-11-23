@@ -222,6 +222,9 @@ const docTemplate = `{
                 "page": {
                     "type": "integer"
                 },
+                "selector": {
+                    "type": "string"
+                },
                 "type": {
                     "$ref": "#/definitions/domain.TitleType"
                 }
@@ -258,7 +261,7 @@ const docTemplate = `{
                     "minimum": -100
                 },
                 "link": {
-                    "description": "link is required for manga, manhua, novel and article",
+                    "description": "link is required for manga, manhua, novel, and article",
                     "type": "string",
                     "maxLength": 200
                 },
@@ -276,6 +279,12 @@ const docTemplate = `{
                     "type": "integer",
                     "maximum": 10000,
                     "minimum": 0
+                },
+                "selector": {
+                    "description": "selector is required for manga, manhua and novel: it is what the crawler uses to find the\nchapter list on the title's link.",
+                    "type": "string",
+                    "maxLength": 500,
+                    "minLength": 1
                 },
                 "type": {
                     "enum": [
@@ -360,6 +369,11 @@ const docTemplate = `{
                     "type": "integer",
                     "maximum": 10000,
                     "minimum": 0
+                },
+                "selector": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "minLength": 1
                 }
             }
         }

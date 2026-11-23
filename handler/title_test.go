@@ -96,6 +96,7 @@ func TestCreateTitle(t *testing.T) {
 			uc:   successUC,
 			body: map[string]interface{}{
 				"name": "Berserk", "type": "manga", "chapter": chapterOne, "link": linkURL,
+				"selector": "#chapters-list li a",
 			},
 			wantStatus: http.StatusCreated,
 		},
@@ -112,6 +113,7 @@ func TestCreateTitle(t *testing.T) {
 			uc:   successUC,
 			body: map[string]interface{}{
 				"name": "Overlord", "type": "novel", "chapter": chapterOne, "link": linkURL,
+				"selector": "#chapters-list li a",
 			},
 			wantStatus: http.StatusCreated,
 		},
@@ -128,6 +130,7 @@ func TestCreateTitle(t *testing.T) {
 			uc:   successUC,
 			body: map[string]interface{}{
 				"name": "Solo Leveling", "type": "manhua", "chapter": chapterOne, "link": linkURL,
+				"selector": "#chapters-list li a",
 			},
 			wantStatus: http.StatusCreated,
 		},
@@ -171,6 +174,7 @@ func TestCreateTitle(t *testing.T) {
 			uc:   conflictUC,
 			body: map[string]interface{}{
 				"name": "Berserk", "type": "manga", "chapter": chapterOne, "link": linkURL,
+				"selector": "#chapters-list li a",
 			},
 			wantStatus: http.StatusConflict,
 			wantCode:   "CONFLICT",
@@ -197,6 +201,58 @@ func TestCreateTitle(t *testing.T) {
 			wantStatus:    http.StatusBadRequest,
 			wantCode:      "BAD_REQUEST",
 			wantDetailMsg: "Valid values are: book, manga, manhua, novel and article",
+		},
+		{
+			name: "valid manga request with selector",
+			uc:   successUC,
+			body: map[string]interface{}{
+				"name": "Berserk", "type": "manga", "chapter": chapterOne, "link": linkURL,
+				"selector": "#chapters-list li a",
+			},
+			wantStatus: http.StatusCreated,
+		},
+		{
+			name: "selector missing for manga",
+			uc:   successUC,
+			body: map[string]interface{}{
+				"name": "Berserk", "type": "manga", "chapter": chapterOne, "link": linkURL,
+			},
+			wantStatus: http.StatusBadRequest,
+			wantCode:   "BAD_REQUEST",
+		},
+		{
+			name: "selector missing for manhua",
+			uc:   successUC,
+			body: map[string]interface{}{
+				"name": "Solo Leveling", "type": "manhua", "chapter": chapterOne, "link": linkURL,
+			},
+			wantStatus: http.StatusBadRequest,
+			wantCode:   "BAD_REQUEST",
+		},
+		{
+			name: "selector missing for novel",
+			uc:   successUC,
+			body: map[string]interface{}{
+				"name": "Overlord", "type": "novel", "chapter": chapterOne, "link": linkURL,
+			},
+			wantStatus: http.StatusBadRequest,
+			wantCode:   "BAD_REQUEST",
+		},
+		{
+			name: "selector is ignored for book",
+			uc:   successUC,
+			body: map[string]interface{}{
+				"name": "Dune", "type": "book", "chapter": chapterOne, "page": pageOne,
+			},
+			wantStatus: http.StatusCreated,
+		},
+		{
+			name: "selector is ignored for article",
+			uc:   successUC,
+			body: map[string]interface{}{
+				"name": "Some Article", "type": "article", "link": linkURL,
+			},
+			wantStatus: http.StatusCreated,
 		},
 	}
 
@@ -436,6 +492,25 @@ func TestUpdateTitle(t *testing.T) {
 				return existing, nil
 			},
 			wantStatus: http.StatusOK,
+		},
+		{
+			name: "success - update selector",
+			id:   "uuid-1",
+			body: map[string]interface{}{"selector": "#chapters-list li a"},
+			updateFn: func(_ context.Context, _ string, f domain.TitleUpdate) (*domain.Title, error) {
+				if f.Selector == nil || *f.Selector != "#chapters-list li a" {
+					t.Errorf("expected selector to reach the usecase, got %v", f.Selector)
+				}
+				return existing, nil
+			},
+			wantStatus: http.StatusOK,
+		},
+		{
+			name:       "empty selector returns 400",
+			id:         "uuid-1",
+			body:       map[string]interface{}{"selector": ""},
+			wantStatus: http.StatusBadRequest,
+			wantCode:   "BAD_REQUEST",
 		},
 		{
 			name:       "empty body returns 400",

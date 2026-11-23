@@ -106,6 +106,9 @@ func (r *MongoTitleRepository) Update(ctx context.Context, externalID string, fi
 	if fields.Link != nil {
 		set["link"] = *fields.Link
 	}
+	if fields.Selector != nil {
+		set["selector"] = *fields.Selector
+	}
 	if fields.Observation != nil {
 		set["observation"] = *fields.Observation
 	}

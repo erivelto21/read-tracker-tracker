@@ -30,7 +30,10 @@ type CreateTitleRequest struct {
 	// page is required only for book
 	Page *int `json:"page" validate:"required_if=Type book,omitempty,min=0,max=10000"`
 	// link is required for manga, manhua, novel, and article
-	Link        *string `json:"link"        validate:"required_if=Type manga,required_if=Type manhua,required_if=Type novel,required_if=Type article,omitempty,http_url,max=200"`
+	Link *string `json:"link" validate:"required_if=Type manga,required_if=Type manhua,required_if=Type novel,required_if=Type article,omitempty,http_url,max=200"`
+	// selector is required for manga, manhua and novel: it is what the crawler uses to find the
+	// chapter list on the title's link.
+	Selector    *string `json:"selector"    validate:"required_if=Type manga,required_if=Type manhua,required_if=Type novel,omitempty,min=1,max=500"`
 	Observation *string `json:"observation" validate:"omitempty,max=500"`
 }
 
@@ -87,6 +90,7 @@ type UpdateTitleRequest struct {
 	Chapter     *int    `json:"chapter"     validate:"omitempty,min=-100,max=10000"`
 	Page        *int    `json:"page"        validate:"omitempty,min=0,max=10000"`
 	Link        *string `json:"link"        validate:"omitempty,http_url,max=200"`
+	Selector    *string `json:"selector"    validate:"omitempty,min=1,max=500"`
 	Observation *string `json:"observation" validate:"omitempty,max=500"`
 }
 
@@ -132,6 +136,7 @@ func (h *TitleHandler) CreateTitle(c *gin.Context) {
 		Chapter:     req.Chapter,
 		Page:        req.Page,
 		Link:        req.Link,
+		Selector:    req.Selector,
 		Observation: req.Observation,
 	}
 
@@ -208,7 +213,7 @@ func (h *TitleHandler) UpdateTitle(c *gin.Context) {
 		return
 	}
 
-	if req.Chapter == nil && req.Page == nil && req.Link == nil && req.Observation == nil {
+	if req.Chapter == nil && req.Page == nil && req.Link == nil && req.Selector == nil && req.Observation == nil {
 		RespondError(c, http.StatusBadRequest, "BAD_REQUEST", "at least one field must be provided", nil)
 		return
 	}
@@ -234,6 +239,7 @@ func (h *TitleHandler) UpdateTitle(c *gin.Context) {
 		Chapter:     req.Chapter,
 		Page:        req.Page,
 		Link:        req.Link,
+		Selector:    req.Selector,
 		Observation: req.Observation,
 	}
 
