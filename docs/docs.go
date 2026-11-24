@@ -205,7 +205,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "chapter": {
-                    "type": "integer"
+                    "type": "number"
                 },
                 "id": {
                     "type": "string"
@@ -221,6 +221,9 @@ const docTemplate = `{
                 },
                 "page": {
                     "type": "integer"
+                },
+                "selector": {
+                    "type": "string"
                 },
                 "type": {
                     "$ref": "#/definitions/domain.TitleType"
@@ -253,12 +256,12 @@ const docTemplate = `{
             "properties": {
                 "chapter": {
                     "description": "chapter is required for book, manga, manhua, novel; optional for article",
-                    "type": "integer",
+                    "type": "number",
                     "maximum": 10000,
                     "minimum": -100
                 },
                 "link": {
-                    "description": "link is required for manga, manhua, novel and article",
+                    "description": "link is required for manga, manhua, novel, and article",
                     "type": "string",
                     "maxLength": 200
                 },
@@ -276,6 +279,12 @@ const docTemplate = `{
                     "type": "integer",
                     "maximum": 10000,
                     "minimum": 0
+                },
+                "selector": {
+                    "description": "selector is required for manga, manhua and novel: it is what the crawler uses to find the\nchapter list on the title's link.",
+                    "type": "string",
+                    "maxLength": 500,
+                    "minLength": 1
                 },
                 "type": {
                     "enum": [
@@ -344,7 +353,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "chapter": {
-                    "type": "integer",
+                    "type": "number",
                     "maximum": 10000,
                     "minimum": -100
                 },
@@ -360,6 +369,11 @@ const docTemplate = `{
                     "type": "integer",
                     "maximum": 10000,
                     "minimum": 0
+                },
+                "selector": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "minLength": 1
                 }
             }
         }

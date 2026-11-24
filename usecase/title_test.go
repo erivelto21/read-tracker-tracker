@@ -214,7 +214,7 @@ func TestTitleUsecase_List(t *testing.T) {
 func TestTitleUsecase_Update(t *testing.T) {
 	t.Parallel()
 
-	chapter := 10
+	chapter := 10.5
 	existing := &domain.Title{ExternalID: "uuid-1", Name: "Berserk", Type: domain.Manga}
 	repoErr := errors.New("db error")
 
